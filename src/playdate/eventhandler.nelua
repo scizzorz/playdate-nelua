@@ -40,8 +40,8 @@ local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uin
       playdate.system.setUpdateCallback(update, nilptr)
     end
     PlaydateEvents:init()
-  elseif event == SystemEvent.InitLua and PlaydateEvents.initLua ~= nilptr then
-    PlaydateEvents:initLua()
+  elseif event == SystemEvent.InitLua and PlaydateEvents.init_lua ~= nilptr then
+    PlaydateEvents:init_lua()
   elseif event == SystemEvent.Lock and PlaydateEvents.lock ~= nilptr then
     PlaydateEvents:lock()
   elseif event == SystemEvent.Unlock and PlaydateEvents.unlock ~= nilptr then
