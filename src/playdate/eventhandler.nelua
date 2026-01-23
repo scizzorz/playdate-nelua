@@ -1,18 +1,18 @@
 local PlaydateEventHandler: type = @record {
   playdate: *PlaydateAPI,
   init: function(self: *PlaydateEventHandler): void,
-  initLua: function(self: *PlaydateEventHandler): void,
+  init_lua: function(self: *PlaydateEventHandler): void,
   update: function(self: *PlaydateEventHandler): void,
   lock: function(self: *PlaydateEventHandler): void,
   unlock: function(self: *PlaydateEventHandler): void,
   pause: function(self: *PlaydateEventHandler): void,
   resume: function(self: *PlaydateEventHandler): void,
   terminate: function(self: *PlaydateEventHandler): void,
-  lowPower: function(self: *PlaydateEventHandler): void,
-  keyPressed: function(self: *PlaydateEventHandler, key: uint32): void,
-  keyReleased: function(self: *PlaydateEventHandler, key: uint32): void,
-  mirrorStarted: function(self: *PlaydateEventHandler): void,
-  mirrorEnded: function(self: *PlaydateEventHandler): void,
+  low_power: function(self: *PlaydateEventHandler): void,
+  key_pressed: function(self: *PlaydateEventHandler, key: uint32): void,
+  key_released: function(self: *PlaydateEventHandler, key: uint32): void,
+  mirror_started: function(self: *PlaydateEventHandler): void,
+  mirror_ended: function(self: *PlaydateEventHandler): void,
 }
 
 global PlaydateEvents: PlaydateEventHandler = {}
@@ -35,33 +35,33 @@ local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uin
     PlaydateEvents.playdate = playdate
   end
 
-  if event == SystemEvent.init and PlaydateEvents.init ~= nilptr then
+  if event == SystemEvent.Init and PlaydateEvents.init ~= nilptr then
     if PlaydateEvents.update ~= nilptr then
       playdate.system.setUpdateCallback(update, nilptr)
     end
     PlaydateEvents:init()
-  elseif event == SystemEvent.initLua and PlaydateEvents.initLua ~= nilptr then
+  elseif event == SystemEvent.InitLua and PlaydateEvents.initLua ~= nilptr then
     PlaydateEvents:initLua()
-  elseif event == SystemEvent.lock and PlaydateEvents.lock ~= nilptr then
+  elseif event == SystemEvent.Lock and PlaydateEvents.lock ~= nilptr then
     PlaydateEvents:lock()
-  elseif event == SystemEvent.unlock and PlaydateEvents.unlock ~= nilptr then
+  elseif event == SystemEvent.Unlock and PlaydateEvents.unlock ~= nilptr then
     PlaydateEvents:unlock()
-  elseif event == SystemEvent.pause and PlaydateEvents.pause ~= nilptr then
+  elseif event == SystemEvent.Pause and PlaydateEvents.pause ~= nilptr then
     PlaydateEvents:pause()
-  elseif event == SystemEvent.resume and PlaydateEvents.resume ~= nilptr then
+  elseif event == SystemEvent.Resume and PlaydateEvents.resume ~= nilptr then
     PlaydateEvents:resume()
-  elseif event == SystemEvent.terminate and PlaydateEvents.terminate ~= nilptr then
+  elseif event == SystemEvent.Terminate and PlaydateEvents.terminate ~= nilptr then
     PlaydateEvents:terminate()
-  elseif event == SystemEvent.lowPower and PlaydateEvents.lowPower ~= nilptr then
-    PlaydateEvents:lowPower()
-  elseif event == SystemEvent.keyPressed and PlaydateEvents.keyPressed ~= nilptr then
-    PlaydateEvents:keyPressed(arg)
-  elseif event == SystemEvent.keyReleased and PlaydateEvents.keyReleased ~= nilptr then
-    PlaydateEvents:keyReleased(arg)
-  elseif event == SystemEvent.mirrorStarted and PlaydateEvents.mirrorStarted ~= nilptr then
-    PlaydateEvents:mirrorStarted()
-  elseif event == SystemEvent.mirrorEnded and PlaydateEvents.mirrorEnded ~= nilptr then
-    PlaydateEvents:mirrorEnded()
+  elseif event == SystemEvent.LowPower and PlaydateEvents.low_power ~= nilptr then
+    PlaydateEvents:low_power()
+  elseif event == SystemEvent.KeyPressed and PlaydateEvents.key_pressed ~= nilptr then
+    PlaydateEvents:key_pressed(arg)
+  elseif event == SystemEvent.KeyReleased and PlaydateEvents.key_released ~= nilptr then
+    PlaydateEvents:key_released(arg)
+  elseif event == SystemEvent.MirrorStarted and PlaydateEvents.mirror_started ~= nilptr then
+    PlaydateEvents:mirror_started()
+  elseif event == SystemEvent.MirrorEnded and PlaydateEvents.mirror_ended ~= nilptr then
+    PlaydateEvents:mirror_ended()
   end
 
   return 0

@@ -5,18 +5,18 @@ require("./graphics.nelua")
 global SystemEvent: type <cimport "PDSystemEvent", nodecl, cinclude "pd_api.h"> = @enum {
   UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
 }
-global SystemEvent.init: SystemEvent <cimport "kEventInit", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.initLua: SystemEvent <cimport "kEventInitLua", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.lock: SystemEvent <cimport "kEventLock", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.unlock: SystemEvent <cimport "kEventUnlock", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.pause: SystemEvent <cimport "kEventPause", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.resume: SystemEvent <cimport "kEventResume", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.terminate: SystemEvent <cimport "kEventTerminate", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.keyPressed: SystemEvent <cimport "kEventKeyPressed", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.keyReleased: SystemEvent <cimport "kEventKeyReleased", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.lowPower: SystemEvent <cimport "kEventLowPower", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.mirrorStarted: SystemEvent <cimport "kEventMirrorStarted", nodecl, cinclude 'pd_api.h'>
-global SystemEvent.mirrorEnded: SystemEvent <cimport "kEventMirrorEnded", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Init: SystemEvent <cimport "kEventInit", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.InitLua: SystemEvent <cimport "kEventInitLua", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Lock: SystemEvent <cimport "kEventLock", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Unlock: SystemEvent <cimport "kEventUnlock", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Pause: SystemEvent <cimport "kEventPause", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Resume: SystemEvent <cimport "kEventResume", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.Terminate: SystemEvent <cimport "kEventTerminate", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.KeyPressed: SystemEvent <cimport "kEventKeyPressed", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.KeyReleased: SystemEvent <cimport "kEventKeyReleased", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.LowPower: SystemEvent <cimport "kEventLowPower", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.MirrorStarted: SystemEvent <cimport "kEventMirrorStarted", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.MirrorEnded: SystemEvent <cimport "kEventMirrorEnded", nodecl, cinclude 'pd_api.h'>
 
 global PlaydateAPI: type <cimport, cinclude "pd_api.h", ctypedef> = @record {
   system: *PlaydateSystem,
