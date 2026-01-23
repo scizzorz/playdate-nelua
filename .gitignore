@@ -3,3 +3,4 @@
 build/
 *.pdx
 src/main.c
+.DS_Store
