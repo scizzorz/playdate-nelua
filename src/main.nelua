@@ -1,29 +1,37 @@
 require("./playdate/init.nelua")
 require("./playdate/eventhandler.nelua")
 
-local weasel: *Bitmap
+local fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft"
+local font: *Font
+
+global TEXT_WIDTH = 86
+global TEXT_HEIGHT = 16
+global x = (LCD_COLUMNS - TEXT_WIDTH) / 2
+global y = (LCD_ROWS - TEXT_HEIGHT) / 2
+global dx = 1
+global dy = 2
 
 function PlaydateEvents:init()
   self.playdate.system.logToConsole("init")
-  weasel = self.playdate.graphics.loadBitmap("weasel", nilptr)
+  font = self.playdate.graphics.loadFont(fontpath, nilptr)
 end
 
 function PlaydateEvents:update()
-  self.playdate.graphics.drawBitmap(weasel, 10, 10, Flip.None)
-end
+  self.playdate.graphics.clear(Color.White)
+  self.playdate.graphics.setFont(font)
 
-function PlaydateEvents:lock()
-  self.playdate.system.logToConsole("lock")
-end
+  local text: cstring = "Hello, world!"
+  self.playdate.graphics.drawText(text, #text, StringEncoding.ASCII, x, y)
 
-function PlaydateEvents:unlock()
-  self.playdate.system.logToConsole("unlock")
-end
+  x = x + dx
+  y = y + dy
 
-function PlaydateEvents:pause()
-  self.playdate.system.logToConsole("pause")
-end
+  if x < 0 or x > LCD_COLUMNS - TEXT_WIDTH then
+    dx = -dx
+  end
+  if y < 0 or y > LCD_ROWS - TEXT_HEIGHT then
+    dy = -dy
+  end
 
-function PlaydateEvents:resume()
-  self.playdate.system.logToConsole("resume")
+  self.playdate.system.drawFPS(0, 0)
 end
