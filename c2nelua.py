@@ -47,6 +47,11 @@ const_rename_map = {
     "kFileReadData": "ReadData",
     "kFileWrite": "Write",
     "kFileAppend": "Append",
+
+    "kCollisionTypeBounce": "Bounce",
+    "kCollisionTypeFreeze": "Freeze",
+    "kCollisionTypeOverlap": "Overlap",
+    "kCollisionTypeSlide": "Slide",
 }
 
 
@@ -95,11 +100,27 @@ if first_line == "typedef enum":
     )
     print("}")
     for name in names:
+        if name[-1] == ",":
+            name = name[:-1]
         const_name = fix_const(name)
         print(f'global {enum_type}.{const_name}: {enum_type} <cimport "{name}", nodecl, cinclude "pd_api.h">')
 
 
-elif first_line == "typedef struct":
+elif first_line.startswith("typedef struct"):
+    if first_line.endswith(";"):
+        _, _, struct_name = first_line.rpartition(" ")
+        struct_name = struct_name[:-1]
+        struct_type = fix_type(struct_name)
+        if struct_name == struct_type:
+            print(f'global {struct_type}: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {{}}')
+        else:
+            print(f'global {struct_type}: type <cimport "{struct_name}", ctypedef, cinclude "pd_api.h"> = @record {{}}')
+        sys.exit(0)
+    elif first_line.endswith("{"):
+        member_start = 1
+    else:
+        member_start = 2
+
     struct_name = lines[-1].strip()[2:-1]
     struct_type = fix_type(struct_name)
     if struct_type == struct_name:
@@ -107,20 +128,38 @@ elif first_line == "typedef struct":
     else:
         struct_name = f' "{struct_name}"'
 
-    members = lines[2:-1]
-    for index, member in enumerate(members):
-        typ, _, name = member.rpartition(" ")
-        name = "".join(name.split())[:-1]
+    members = []
+    for index, member in enumerate(lines[member_start:-1]):
+        if not member.strip():
+            continue
+
+        if ";" not in member:
+            member = member.strip()
+            if member and member.startswith("//"):
+                members.append((None, None, "-- " + member[2:]))
+            continue
+
+        decl, _, comment = member.partition(";")
+        typ, _, name = decl.rpartition(" ")
+
+        name = "".join(name.split())
         while name[0] == "*":
             typ += "*"
             name = name[1:]
 
+        comment = comment.strip()
+        if comment and comment.startswith("//"):
+            comment = " -- " + comment[2:]
+
         typ = fix_type(typ)
-        members[index] = (name, typ)
+        members.append((name, typ, comment))
 
     print(f'global {struct_type}: type <cimport{struct_name}, nodecl, cinclude "pd_api.h"> = @record {{')
-    for name, typ in members:
-        print(f"  {name}: {typ},")
+    for name, typ, comment in members:
+        if name and typ:
+            print(f"  {name}: {typ},{comment}")
+        else:
+            print(f"  {comment}")
     print("}")
 
 else:
