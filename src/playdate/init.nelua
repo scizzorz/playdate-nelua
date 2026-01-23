@@ -1,4 +1,5 @@
 require("./system.nelua")
+require("./graphics.nelua")
 
 -- PDSystemEvent
 global SystemEvent: type <cimport "PDSystemEvent", nodecl, cinclude "pd_api.h"> = @enum {
@@ -19,9 +20,9 @@ global SystemEvent.mirrorEnded: SystemEvent <cimport "kEventMirrorEnded", nodecl
 
 global PlaydateAPI: type <cimport, cinclude "pd_api.h", ctypedef> = @record {
   system: *PlaydateSystem,
+  graphics: *PlaydateGraphics,
 --[[
   file: *PlaydateFile,
-  graphics: *PlaydateGraphics,
   sprite: *PlaydateSprite,
   display: *PlaydateDisplay,
   sound: *PlaydateSound,

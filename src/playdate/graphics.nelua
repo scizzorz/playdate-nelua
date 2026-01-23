@@ -1,0 +1,110 @@
+global LCD_COLUMNS <const> = 400
+global LCD_ROWS <const> = 240
+global LCD_ROWSIZE <const> = 52
+
+-- LCDRect
+global LCDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  left: cint,
+  right: cint, -- not inclusive
+  top: cint,
+  bottom: cint, -- not inclusive
+}
+
+-- LCDBitmapDrawMode
+global DrawMode: type <cimport "LCDBitmapDrawMode", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global DrawMode.Copy: DrawMode <cimport "kDrawModeCopy", nodecl, cinclude "pd_api.h">
+global DrawMode.WhiteTransparent: DrawMode <cimport "kDrawModeWhiteTransparent", nodecl, cinclude "pd_api.h">
+global DrawMode.BlackTransparent: DrawMode <cimport "kDrawModeBlackTransparent", nodecl, cinclude "pd_api.h">
+global DrawMode.FillWhite: DrawMode <cimport "kDrawModeFillWhite", nodecl, cinclude "pd_api.h">
+global DrawMode.FillBlack: DrawMode <cimport "kDrawModeFillBlack", nodecl, cinclude "pd_api.h">
+global DrawMode.XOR: DrawMode <cimport "kDrawModeXOR", nodecl, cinclude "pd_api.h">
+global DrawMode.NXOR: DrawMode <cimport "kDrawModeNXOR", nodecl, cinclude "pd_api.h">
+global DrawMode.Inverted: DrawMode <cimport "kDrawModeInverted", nodecl, cinclude "pd_api.h">
+
+-- LCDBitmapFlip
+global Flip: type <cimport "LCDBitmapFlip", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Flip.None: Flip <cimport "kBitmapUnflipped", nodecl, cinclude "pd_api.h">
+global Flip.X: Flip <cimport "kBitmapFlippedX", nodecl, cinclude "pd_api.h">
+global Flip.Y: Flip <cimport "kBitmapFlippedY", nodecl, cinclude "pd_api.h">
+global Flip.XY: Flip <cimport "kBitmapFlippedXY", nodecl, cinclude "pd_api.h">
+
+-- LCDSolidColor
+global Color: type <cimport "LCDSolidColor", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Color.Black: Color <cimport "kColorBlack", nodecl, cinclude "pd_api.h">
+global Color.White: Color <cimport "kColorWhite", nodecl, cinclude "pd_api.h">
+global Color.Clear: Color <cimport "kColorClear", nodecl, cinclude "pd_api.h">
+global Color.XOR: Color <cimport "kColorXOR", nodecl, cinclude "pd_api.h">
+
+-- LCDLineCapStyle
+global LineCapStyle: type <cimport "LCDLineCapStyle", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global LineCapStyle.Butt: LineCapStyle <cimport "kLineCapStyleButt", nodecl, cinclude "pd_api.h">
+global LineCapStyle.Square: LineCapStyle <cimport "kLineCapStyleSquare", nodecl, cinclude "pd_api.h">
+global LineCapStyle.Round: LineCapStyle <cimport "kLineCapStyleRound", nodecl, cinclude "pd_api.h">
+
+-- LCDFontLanguage
+global FontLanguage: type <cimport "LCDFontLanguage", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global FontLanguage.English: FontLanguage <cimport "kFontLanguageEnglish", nodecl, cinclude "pd_api.h">
+global FontLanguage.Japanese: FontLanguage <cimport "kFontLanguageJapanese", nodecl, cinclude "pd_api.h">
+global FontLanguage.Unknown: FontLanguage <cimport "kFontLanguageUnknown", nodecl, cinclude "pd_api.h">
+
+-- PDStringEncoding
+global StringEncoding: type <cimport "PDStringEncoding", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global StringEncoding.ASCII: StringEncoding <cimport "kASCIIEncoding", nodecl, cinclude "pd_api.h">
+global StringEncoding.UTF8: StringEncoding <cimport "kUTF8Encoding", nodecl, cinclude "pd_api.h">
+global StringEncoding.LE16bit: StringEncoding <cimport "k16BitLEEncoding", nodecl, cinclude "pd_api.h">
+
+global LCDPattern: type = @[16]uint8
+-- FIXME what is this?
+-- typedef uintptr_t LCDColor; // LCDSolidColor or pointer to LCDPattern
+-- global LCDColor: type
+
+-- PDPolygonFillRule
+global PolygonFillRule: type <cimport "PDPolygonFillRule", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global PolygonFillRule.FillNonZero: PolygonFillRule <cimport "kPolygonFillNonZero", nodecl, cinclude "pd_api.h">
+global PolygonFillRule.FillEvenOdd: PolygonFillRule <cimport "kPolygonFillEvenOdd", nodecl, cinclude "pd_api.h">
+
+-- PDTextWrappingMode
+global TextWrappingMode: type <cimport "PDTextWrappingMode", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global TextWrappingMode.Clip: TextWrappingMode <cimport "kWrapClip", nodecl, cinclude "pd_api.h">
+global TextWrappingMode.Character: TextWrappingMode <cimport "kWrapCharacter", nodecl, cinclude "pd_api.h">
+global TextWrappingMode.Word: TextWrappingMode <cimport "kWrapWord", nodecl, cinclude "pd_api.h">
+
+-- PDTextAlignment
+global TextAlignment: type <cimport "PDTextAlignment", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global TextAlignment.Left: TextAlignment <cimport "kAlignTextLeft", nodecl, cinclude "pd_api.h">
+global TextAlignment.Center: TextAlignment <cimport "kAlignTextCenter", nodecl, cinclude "pd_api.h">
+global TextAlignment.Right: TextAlignment <cimport "kAlignTextRight", nodecl, cinclude "pd_api.h">
+
+-- playdate_video
+global PlaydateVideo: type <cimport "playdate_video", ctypedef, cinclude "pd_api.h"> = @record {
+}
+
+-- playdate_videostream
+global PlaydateVideoStream: type <cimport "playdate_videostream", ctypedef, cinclude "pd_api.h"> = @record {
+}
+
+-- playdate_tilemap
+global PlaydateTilemap: type <cimport "playdate_tilemap", ctypedef, cinclude "pd_api.h"> = @record {
+}
+
+-- playdate_graphics
+global PlaydateGraphics: type <cimport "playdate_graphics", ctypedef, cinclude "pd_api.h"> = @record {
+}
