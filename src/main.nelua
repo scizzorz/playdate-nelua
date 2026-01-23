@@ -20,8 +20,8 @@ function PlaydateEvents:update()
   self.playdate.graphics.clear(Color.White)
   self.playdate.graphics.setFont(font)
 
-  local text: cstring = "Hello, world!"
-  self.playdate.graphics.drawText(text, #text, StringEncoding.ASCII, x, y)
+  local text = "Hello, world!"
+  self.playdate.graphics.drawText(text.data, #text, StringEncoding.ASCII, x, y)
 
   x = x + dx
   y = y + dy
