@@ -93,6 +93,19 @@ global TextAlignment.Left: TextAlignment <cimport "kAlignTextLeft", nodecl, cinc
 global TextAlignment.Center: TextAlignment <cimport "kAlignTextCenter", nodecl, cinclude "pd_api.h">
 global TextAlignment.Right: TextAlignment <cimport "kAlignTextRight", nodecl, cinclude "pd_api.h">
 
+global Bitmap: type <cimport "LCDBitmap", ctypedef, cinclude "pd_api.h"> = @record {}
+global BitmapTable: type <cimport "LCDBitmapTable", ctypedef, cinclude "pd_api.h"> = @record {}
+global Font: type <cimport "LCDFont", ctypedef, cinclude "pd_api.h"> = @record {}
+global FontData: type <cimport "LCDFontData", ctypedef, cinclude "pd_api.h"> = @record {}
+global FontPage: type <cimport "LCDFontPage", ctypedef, cinclude "pd_api.h"> = @record {}
+global FontGlyph: type <cimport "LCDFontGlyph", ctypedef, cinclude "pd_api.h"> = @record {}
+global TileMap: type <cimport "LCDTileMap", ctypedef, cinclude "pd_api.h"> = @record {}
+global VideoPlayer: type <cimport "LCDVideoPlayer", ctypedef, cinclude "pd_api.h"> = @record {}
+global StreamPlayer: type <cimport "LCDStreamPlayer", ctypedef, cinclude "pd_api.h"> = @record {}
+global HTTPConnection: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global TCPConnection: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global FilePlayer: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
 -- playdate_video
 global PlaydateVideo: type <cimport "playdate_video", ctypedef, cinclude "pd_api.h"> = @record {
 }
@@ -107,4 +120,24 @@ global PlaydateTilemap: type <cimport "playdate_tilemap", ctypedef, cinclude "pd
 
 -- playdate_graphics
 global PlaydateGraphics: type <cimport "playdate_graphics", ctypedef, cinclude "pd_api.h"> = @record {
+  -- FIXME this ain't right, it uses that union thing
+  -- clear: function(color: Color),
+  setBackgroundColor: function(color: Color),
+
+  clearClipRect: function(),
+
+  pushContext: function(target: *Bitmap),
+  popContext: function(),
+
+  drawBitmap: function(bitmap: *Bitmap, x: cint, y: cint, flip: Flip),
+
+  -- FIXME this uses the union thing
+  fillRect: function(x: cint, y: cint, width: cint, height: cint, color: Color),
+
+  -- Bitmap
+  -- FIXME this uses the union thing
+  newBitmap: function(width: cint, height: cint, color: Color): *Bitmap,
+  freeBitmap: function(bitmap: *Bitmap),
+  loadBitmap: function(path: cstring, outerr: *cstring): *Bitmap,
+  copyBitmap: function(bitmap: *Bitmap): *Bitmap,
 }

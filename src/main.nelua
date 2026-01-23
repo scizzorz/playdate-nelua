@@ -1,12 +1,15 @@
 require("./playdate/init.nelua")
 require("./playdate/eventhandler.nelua")
 
+local weasel: *Bitmap
+
 function PlaydateEvents:init()
   self.playdate.system.logToConsole("init")
+  weasel = self.playdate.graphics.loadBitmap("weasel", nilptr)
 end
 
 function PlaydateEvents:update()
-  self.playdate.system.logToConsole("update")
+  self.playdate.graphics.drawBitmap(weasel, 10, 10, Flip.None)
 end
 
 function PlaydateEvents:lock()
