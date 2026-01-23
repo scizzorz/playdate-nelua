@@ -1,0 +1,5 @@
+name=Hello World Nelua
+author=John Weachock
+description=A small demo of the Nelua-C API bindings
+bundleID=com.scizzorz.hellonelua
+imagePath=

@@ -1,0 +1,5 @@
+*.dylib
+*.elf
+build/
+*.pdx
+src/main.c

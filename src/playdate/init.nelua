@@ -1,0 +1,33 @@
+require("./system.nelua")
+
+-- PDSystemEvent
+global SystemEvent: type <cimport "PDSystemEvent", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global SystemEvent.init: SystemEvent <cimport "kEventInit", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.initLua: SystemEvent <cimport "kEventInitLua", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.lock: SystemEvent <cimport "kEventLock", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.unlock: SystemEvent <cimport "kEventUnlock", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.pause: SystemEvent <cimport "kEventPause", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.resume: SystemEvent <cimport "kEventResume", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.terminate: SystemEvent <cimport "kEventTerminate", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.keyPressed: SystemEvent <cimport "kEventKeyPressed", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.keyReleased: SystemEvent <cimport "kEventKeyReleased", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.lowPower: SystemEvent <cimport "kEventLowPower", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.mirrorStarted: SystemEvent <cimport "kEventMirrorStarted", nodecl, cinclude 'pd_api.h'>
+global SystemEvent.mirrorEnded: SystemEvent <cimport "kEventMirrorEnded", nodecl, cinclude 'pd_api.h'>
+
+global PlaydateAPI: type <cimport, cinclude "pd_api.h", ctypedef> = @record {
+  system: *PlaydateSystem,
+--[[
+  file: *PlaydateFile,
+  graphics: *PlaydateGraphics,
+  sprite: *PlaydateSprite,
+  display: *PlaydateDisplay,
+  sound: *PlaydateSound,
+  lua: *PlaydateLua,
+  json: *PlaydateJson,
+  scoreboards: *PlaydateScoreboards,
+  network: *PlaydateNetwork,
+]]
+}

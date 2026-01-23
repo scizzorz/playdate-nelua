@@ -1,0 +1,26 @@
+require("./playdate/init.nelua")
+require("./playdate/eventhandler.nelua")
+
+function PlaydateEvents:init()
+  self.playdate.system.logToConsole("init")
+end
+
+function PlaydateEvents:update()
+  self.playdate.system.logToConsole("update")
+end
+
+function PlaydateEvents:lock()
+  self.playdate.system.logToConsole("lock")
+end
+
+function PlaydateEvents:unlock()
+  self.playdate.system.logToConsole("unlock")
+end
+
+function PlaydateEvents:pause()
+  self.playdate.system.logToConsole("pause")
+end
+
+function PlaydateEvents:resume()
+  self.playdate.system.logToConsole("resume")
+end

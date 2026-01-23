@@ -1,0 +1,144 @@
+-- All of the cinclude's in this specify "pd_api.h" rather than the more
+-- appropriate sub-header because I was running into an error with the
+-- subheaders. I don't think it matters in the end, either way, but the error
+-- was likely to do with my C header path being wacked out.
+
+-- PDButtons
+global Buttons: type <cimport "PDButtons", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Buttons.Left: Buttons <cimport "kButtonLeft", nodecl, cinclude "pd_api.h">
+global Buttons.Right: Buttons <cimport "kButtonRight", nodecl, cinclude "pd_api.h">
+global Buttons.Up: Buttons <cimport "kButtonUp", nodecl, cinclude "pd_api.h">
+global Buttons.Down: Buttons <cimport "kButtonDown", nodecl, cinclude "pd_api.h">
+global Buttons.B: Buttons <cimport "kButtonB", nodecl, cinclude "pd_api.h">
+global Buttons.A: Buttons <cimport "kButtonA", nodecl, cinclude "pd_api.h">
+
+-- PDLanguage
+global Language: type <cimport "PDLanguage", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Language.English: Language <cimport "kPDLanguageEnglish", nodecl, cinclude "pd_api.h">
+global Language.Japanese: Language <cimport "kPDLanguageJapanese", nodecl, cinclude "pd_api.h">
+global Language.Unknown: Language <cimport "kPDLanguageUnknown", nodecl, cinclude "pd_api.h">
+
+global function AccessRequestCallback(allowed: boolean, userdata: pointer): void <cimport, nodecl, cinclude "pd_api.h">
+end
+
+-- accessReply
+global AccessReply: type <cimport "accessReply", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global AccessReply.Ask: AccessReply <cimport "kAccessAsk", nodecl, cinclude "pd_api.h">
+global AccessReply.Deny: AccessReply <cimport "kAccessDeny", nodecl, cinclude "pd_api.h">
+global AccessReply.AccessAllow: AccessReply <cimport "kAccessAllow", nodecl, cinclude "pd_api.h">
+
+global DateTime: type <cimport "PDDateTime", ctypedef, cinclude "pd_api.h"> = @record {
+  year: uint16,
+  month: uint8,
+  day: uint8,
+  weekday: uint8,
+  hour: uint8,
+  minute: uint8,
+  second: uint8,
+}
+
+-- FIXME PDMenuItem?
+
+-- PDPeripherals
+global Peripherals: type <cimport "PDPeripherals", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Peripherals.None: integer <cimport "kNone", nodecl, cinclude "pd_api.h">
+global Peripherals.Accelerometer: integer <cimport "kAccelerometer", nodecl, cinclude "pd_api.h">
+global Peripherals.AllPeriperals: integer <cimport "kAllPeripherals", nodecl, cinclude "pd_api.h">
+
+-- Callback function types
+global CallbackFunction: type = @function(userdata: pointer): void
+global MenuItemCallbackFunction: type = @function(userdata: pointer): void
+global ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
+
+-- PDInfo
+global PDInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {
+  osversion: uint32,
+  language: integer,
+}
+
+global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.h"> = @record {
+  realloc: function(ptr: pointer, size: csize): pointer, -- ptr = NULL -> malloc, size = 0 -> free
+  formatString: function(ret: *cstring, fmt: cstring, ...): cint,
+  logToConsole: function(fmt: cstring, ...),
+  error: function(fmt: cstring, ...),
+  getLanguage: function(): Language,
+  getCurrentTimeMilliseconds: function(): cuint,
+  getSecondsSinceEpoch: function(milliseconds: *cuint): cuint,
+  drawFPS: function(x: cint, y: cint),
+
+  setUpdateCallback: function(update: CallbackFunction, userdata: pointer),
+  getButtonState: function(current: *Buttons, pushed: *Buttons, released: *Buttons),
+  setPeripheralsEnabled: function(mask: Peripherals),
+  getAccelerometer: function(outx: *float32, outy: *float32, outz: *float32),
+
+  getCrankChange: function(): float32,
+  getCrankAngle: function(): float32,
+  isCrankDocked: function(): cint,
+  setCrankSoundsDisabled: function(flag: cint): cint, -- returns previous setting
+
+  getFlipped: function(): cint,
+  setAutoLockDisabled: function(disable: cint),
+
+  --[[ FIXME
+	void (*setMenuImage)(LCDBitmap* bitmap, int xOffset);
+	PDMenuItem* (*addMenuItem)(const char *title, PDMenuItemCallbackFunction* callback, void* userdata);
+	PDMenuItem* (*addCheckmarkMenuItem)(const char *title, int value, PDMenuItemCallbackFunction* callback, void* userdata);
+	PDMenuItem* (*addOptionsMenuItem)(const char *title, const char** optionTitles, int optionsCount, PDMenuItemCallbackFunction* f, void* userdata);
+  ]]
+  removeAllMenuItems: function(),
+  --[[ FIXME
+	void (*removeMenuItem)(PDMenuItem *menuItem);
+	int (*getMenuItemValue)(PDMenuItem *menuItem);
+	void (*setMenuItemValue)(PDMenuItem *menuItem, int value);
+	const char* (*getMenuItemTitle)(PDMenuItem *menuItem);
+	void (*setMenuItemTitle)(PDMenuItem *menuItem, const char *title);
+	void* (*getMenuItemUserdata)(PDMenuItem *menuItem);
+	void (*setMenuItemUserdata)(PDMenuItem *menuItem, void *ud);
+  ]]
+
+  getReduceFlashing: function(): cint,
+
+  -- 1.1
+  getElapsedTime: function(): float32,
+  resetElapsedTime: function(),
+
+  -- 1.4
+  getBatteryPercentage: function(): float32,
+  getBatteryVoltage: function(): float32,
+
+  -- 1.13
+  getTimezoneOffset: function(): int32,
+  shouldDisplay24HourTime: function(): cint,
+  convertEpochToDateTime: function(epoch: uint32, datetime: *DateTime),
+  convertDateTimeToEpoch: function(datetime: *DateTime): uint32,
+
+  -- 2.0
+  clearICache: function(),
+
+  -- 2.4
+  setButtonCallback: function(cb: ButtonCallbackFunction, buttonud: pointer, queuesize: cint),
+  setSerialMessageCallback: function(callback: function(cstring)),
+  -- FIXME not sure we have va_args here
+  -- vaFormatString: function(outstr: *cstring, fmt: cstring, ???)
+  parseString: function(str: cstring, format: cstring, ...): cint,
+
+  -- ???
+  delay: function(milliseconds: uint32),
+
+  -- 2.7
+  getServerTime: function(callback: function(time: cstring, err: cstring)),
+  restartGame: function(launchargs: cstring),
+  getLaunchArgs: function(outpath: *cstring),
+  sendMirrorData: function(command: uint8, data: pointer, len: cint),
+
+  -- 3.0
+  getSystemInfo: function(): *PDInfo,
+}
