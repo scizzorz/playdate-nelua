@@ -1,0 +1,91 @@
+
+global LuaState: type = @pointer
+global LuaCFunction: type = @function(state: *LuaState): cint
+
+global LuaUDObject: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global LCDSprite: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global LuaValueType: type <cimport "l_valtype", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global LuaValueType.Int: LuaValueType <cimport "kInt", nodecl, cinclude "pd_api.h">
+global LuaValueType.Float: LuaValueType <cimport "kFloat", nodecl, cinclude "pd_api.h">
+global LuaValueType.Str: LuaValueType <cimport "kStr", nodecl, cinclude "pd_api.h">
+
+global LuaRegistration: type <cimport "lua_reg", nodecl, cinclude "pd_api.h"> = @record {
+  name: cstring,
+  func: LuaCFunction,
+}
+
+global LuaType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global LuaType.Nil: LuaType <cimport "kTypeNil", nodecl, cinclude "pd_api.h">
+global LuaType.Bool: LuaType <cimport "kTypeBool", nodecl, cinclude "pd_api.h">
+global LuaType.Int: LuaType <cimport "kTypeInt", nodecl, cinclude "pd_api.h">
+global LuaType.Float: LuaType <cimport "kTypeFloat", nodecl, cinclude "pd_api.h">
+global LuaType.String: LuaType <cimport "kTypeString", nodecl, cinclude "pd_api.h">
+global LuaType.Table: LuaType <cimport "kTypeTable", nodecl, cinclude "pd_api.h">
+global LuaType.Function: LuaType <cimport "kTypeFunction", nodecl, cinclude "pd_api.h">
+global LuaType.Thread: LuaType <cimport "kTypeThread", nodecl, cinclude "pd_api.h">
+global LuaType.Object: LuaType <cimport "kTypeObject", nodecl, cinclude "pd_api.h">
+
+global LuaValueUnion: type = @union {
+  intval: cuint,
+  floatval: float32,
+  strval: cstring,
+}
+
+global LuaValue: type <cimport "lua_val", nodecl, cinclude "pd_api.h"> = @record {
+  name: cstring,
+  type: LuaValueType,
+  v: LuaValueUnion,
+}
+
+global PlaydateLua: type <cimport "playdate_lua", nodecl, cinclude "pd_api.h"> = @record {
+  -- these two return 1 on success, else 0 with an error message in outErr
+  addFunction: function(f: LuaCFunction, name: cstring, outErr: *cstring): cint,
+  registerClass: function(name: cstring, reg: *LuaRegistration, vals: *LuaValue, isstatic: cint, outErr: *cstring): cint,
+
+  pushFunction: function(f: LuaCFunction),
+  indexMetatable: function(): cint,
+
+  stop: function(),
+  start: function(),
+
+  -- stack operations
+  getArgCount: function(): cint,
+  getArgType: function(pos: cint, outClass: *cstring): LuaType,
+
+  argIsNil: function(pos: cint): cint,
+  getArgBool: function(pos: cint): cint,
+  getArgInt: function(pos: cint): cint,
+  getArgFloat: function(pos: cint): float32,
+  getArgString: function(pos: cint): cstring,
+  getArgBytes: function(pos: cint, outlen: *csize): cstring,
+  getArgObject: function(pos: cint, type: cstring, outud: **LuaUDObject): pointer,
+
+  getBitmap: function(pos: cint): *Bitmap,
+  getSprite: function(pos: cint): *LCDSprite,
+
+  -- for returning values back to Lua
+  pushNil: function(),
+  pushBool: function(val: cint),
+  pushInt: function(val: cint),
+  pushFloat: function(val: float32),
+  pushString: function(str: cstring),
+  pushBytes: function(str: cstring, len: csize),
+  pushBitmap: function(bitmap: *Bitmap),
+  pushSprite: function(sprite: *LCDSprite),
+
+  pushObject: function(obj: pointer, type: cstring, nValues: cint): *LuaUDObject,
+  retainObject: function(obj: *LuaUDObject): *LuaUDObject,
+  releaseObject: function(obj: *LuaUDObject),
+
+  setUserValue: function(obj: *LuaUDObject, slot: cuint), -- sets item on top of stack and pops it
+  getUserValue: function(obj: *LuaUDObject, slot: cuint): cint, -- pushes item at slot to top of stack, returns stack position
+
+  -- calling lua from C has some overhead. use sparingly!
+  callFunction_deprecated: function(name: cstring, nargs: cint),
+  callFunction: function(name: cstring, nargs: cint, outerr: *cstring): cint,
+}

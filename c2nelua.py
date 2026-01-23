@@ -1,7 +1,7 @@
 #!/usr/bin/env uv run --script
 import sys
 
-reserved_names = ("end",)
+reserved_names = ("end", "repeat", "global", )
 
 type_rename_map = {
     "bool": "boolean",
@@ -40,6 +40,18 @@ type_rename_map = {
     "LCDTileMap": "TileMap",
     "LCDVideoPlayer": "VideoPlayer",
     "SDFile": "File",
+
+    "sndCallbackProc": "SoundCallback",
+    "effectProc": "EffectCallback",
+
+    "enumMicSource": "MicSource",
+
+    "lua_State": "LuaState",
+    "lua_CFunction": "LuaCFunction",
+    "l_valtype": "LuaValueType",
+    "lua_reg": "LuaRegistration",
+    "enumLuaType": "LuaType",
+    "lua_val": "LuaValue",
 }
 
 const_rename_map = {
@@ -52,6 +64,27 @@ const_rename_map = {
     "kCollisionTypeFreeze": "Freeze",
     "kCollisionTypeOverlap": "Overlap",
     "kCollisionTypeSlide": "Slide",
+
+    "kSound8bitMono": "Mono8Bit",
+    "kSound8bitStereo": "Stereo8Bit",
+    "kSound16bitMono": "Mono16Bit",
+    "kSound16bitStereo": "Stereo16Bit",
+    "kSoundADPCMMono": "MonoADPCM",
+    "kSoundADPCMStereo": "StereoADPCM",
+
+    "kInt": "Int",
+    "kFloat": "Float",
+    "kStr": "String",
+
+    "kTypeNil": "Nil",
+    "kTypeBool": "Bool",
+    "kTypeInt": "Int",
+    "kTypeFloat": "Float",
+    "kTypeString": "String",
+    "kTypeTable": "Table",
+    "kTypeFunction": "Function",
+    "kTypeThread": "Thread",
+    "kTypeObject": "Object",
 }
 
 

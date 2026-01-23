@@ -1,0 +1,541 @@
+global AUDIO_FRAMES_PER_CYCLE <const> = 512
+
+global SoundFormat: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global SoundFormat.Mono8Bit: SoundFormat <cimport "kSound8bitMono", nodecl, cinclude "pd_api.h">
+global SoundFormat.Stereo8Bit: SoundFormat <cimport "kSound8bitStereo", nodecl, cinclude "pd_api.h">
+global SoundFormat.Mono16Bit: SoundFormat <cimport "kSound16bitMono", nodecl, cinclude "pd_api.h">
+global SoundFormat.Stereo16Bit: SoundFormat <cimport "kSound16bitStereo", nodecl, cinclude "pd_api.h">
+global SoundFormat.MonoADPCM: SoundFormat <cimport "kSoundADPCMMono", nodecl, cinclude "pd_api.h">
+global SoundFormat.StereoADPCM: SoundFormat <cimport "kSoundADPCMStereo", nodecl, cinclude "pd_api.h">
+
+global MIDINote: type = @float32
+global NOTE_C4 = 60
+-- FIXME float pd_noteToFrequency(MIDINote n)
+-- FIXME MIDINote pd_frequencyToNote(float f)
+
+global SoundSource: type <cimport "SoundSource", ctypedef, cinclude "pd_api.h"> = @record {}
+global SoundCallback: type = @function(c: *SoundSource, userdata: pointer)
+
+global PlaydateSoundSource: type <cimport "playdate_sound_source", nodecl, cinclude "pd_api.h"> = @record {
+  setVolume: function(c: *SoundSource, lvol: float32, rvol: float32),
+  getVolume: function(c: *SoundSource, outl: *float32, outr: *float32),
+  isPlaying: function(c: *SoundSource): cint,
+  setFinishCallback: function(c: *SoundSource, callback: SoundCallback, userdata: pointer),
+}
+
+global FilePlayer: type <cimport "FilePlayer", ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundFilePlayer: type <cimport "playdate_sound_fileplayer", nodecl, cinclude "pd_api.h"> = @record {
+  newPlayer: function(): *FilePlayer,
+  freePlayer: function(player: *FilePlayer),
+  loadIntoPlayer: function(player: *FilePlayer, path: cstring): cint,
+  setBufferLength: function(player: *FilePlayer, bufferLen: float32),
+  play: function(player: *FilePlayer, repeat_: cint): cint,
+  isPlaying: function(player: *FilePlayer): cint,
+  pause: function(player: *FilePlayer),
+  stop: function(player: *FilePlayer),
+  setVolume: function(player: *FilePlayer, left: float32, right: float32),
+  getVolume: function(player: *FilePlayer, left: *float32, right: *float32),
+  getLength: function(player: *FilePlayer): float32,
+  setOffset: function(player: *FilePlayer, offset: float32),
+  setRate: function(player: *FilePlayer, rate: float32),
+  setLoopRange: function(player: *FilePlayer, start: float32, end_: float32),
+  didUnderrun: function(player: *FilePlayer): cint,
+  setFinishCallback: function(player: *FilePlayer, callback: SoundCallback, userdata: pointer),
+  setLoopCallback: function(player: *FilePlayer, callback: SoundCallback, userdata: pointer),
+  getOffset: function(player: *FilePlayer): float32,
+  getRate: function(player: *FilePlayer): float32,
+  setStopOnUnderrun: function(player: *FilePlayer, flag: cint),
+  fadeVolume: function(player: *FilePlayer, left: float32, right: float32, len: int32, finishCallback: SoundCallback, userdata: pointer),
+  setMP3StreamSource: function(player: *FilePlayer, dataSource: function(data: *uint8, bytes: cint, userdata: pointer): cint, userdata: pointer, bufferLen: float32),
+}
+
+global AudioSample: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global SamplePlayer: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundSample: type <cimport "playdate_sound_sample", nodecl, cinclude "pd_api.h"> = @record {
+  newSampleBuffer: function(byteCount: cint): *AudioSample,
+  loadIntoSample: function(sample: *AudioSample, path: cstring): cint,
+  load: function(path: cstring): *AudioSample,
+  newSampleFromData: function(data: *uint8, format: SoundFormat, sampleRate: uint32, byteCount: cint, shouldFreeData: cint): *AudioSample,
+  getData: function(sample: *AudioSample, data: **uint8, format: *SoundFormat, sampleRate: *uint32, bytelength: *uint32),
+  freeSample: function(sample: *AudioSample),
+  getLength: function(sample: *AudioSample): float32,
+
+  -- 2.4
+  decompress: function(sample: *AudioSample): cint,
+}
+
+global PlaydateSoundSamplePlayer: type <cimport "playdate_sound_sampleplayer", nodecl, cinclude "pd_api.h"> = @record {
+  newPlayer: function(): *SamplePlayer,
+  freePlayer: function(player: *SamplePlayer),
+  setSample: function(player: *SamplePlayer, sample: *AudioSample),
+  play: function(player: *SamplePlayer, repeat_: cint, rate: float32): cint,
+  isPlaying: function(player: *SamplePlayer): cint,
+  stop: function(player: *SamplePlayer),
+  setVolume: function(player: *SamplePlayer, left: float32, right: float32),
+  getVolume: function(player: *SamplePlayer, left: *float32, right: *float32),
+  getLength: function(player: *SamplePlayer): float32,
+  setOffset: function(player: *SamplePlayer, offset: float32),
+  setRate: function(player: *SamplePlayer, rate: float32),
+  setPlayRange: function(player: *SamplePlayer, start: cint, end_: cint),
+  setFinishCallback: function(player: *SamplePlayer, callback: SoundCallback, userdata: pointer),
+  setLoopCallback: function(player: *SamplePlayer, callback: SoundCallback, userdata: pointer),
+  getOffset: function(player: *SamplePlayer): float32,
+  getRate: function(player: *SamplePlayer): float32,
+  setPaused: function(player: *SamplePlayer, flag: cint),
+}
+
+-- a PDSynthSignalValue represents a signal that can be used as an input to a modulator.
+-- its PDSynthSignal subclass is used for "active" signals that change their values automatically. PDSynthLFO and PDSynthEnvelope are subclasses of PDSynthSignal.
+
+global PDSynthSignalValue: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global PDSynthSignal: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global signalStepFunc: type = @function(userdata: pointer, ioframes: *cint, ifval: *float32): float32
+global signalNoteOnFunc: type = @function(userdata: pointer, note: MIDINote, vel: float32, len: float32) -- len = -1 for indefinite
+global signalNoteOffFunc: type = @function(userdata: pointer, stopped: cint, offset: cint) -- stopped = 0 on note release, = 1 when note actually stops playing; offset is # of frames into the current cycle
+global signalDeallocFunc: type = @function(userdata: pointer)
+
+global PlaydateSoundSignal: type <cimport "playdate_sound_signal", nodecl, cinclude "pd_api.h"> = @record {
+  newSignal: function(step: signalStepFunc, noteOn: signalNoteOnFunc, noteOff: signalNoteOffFunc, dealloc: signalDeallocFunc, userdata: pointer): *PDSynthSignal,
+  freeSignal: function(signal: *PDSynthSignal),
+  getValue: function(signal: *PDSynthSignal): float32,
+  setValueScale: function(signal: *PDSynthSignal, scale: float32),
+  setValueOffset: function(signal: *PDSynthSignal, offset: float32),
+
+  -- 2.6
+  newSignalForValue: function(value: *PDSynthSignalValue): *PDSynthSignal,
+}
+
+global LFOType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global LFOType.kLFOTypeSquare: LFOType <cimport "kLFOTypeSquare", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeTriangle: LFOType <cimport "kLFOTypeTriangle", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeSine: LFOType <cimport "kLFOTypeSine", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeSampleAndHold: LFOType <cimport "kLFOTypeSampleAndHold", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeSawtoothUp: LFOType <cimport "kLFOTypeSawtoothUp", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeSawtoothDown: LFOType <cimport "kLFOTypeSawtoothDown", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeArpeggiator: LFOType <cimport "kLFOTypeArpeggiator", nodecl, cinclude "pd_api.h">
+global LFOType.kLFOTypeFunction: LFOType <cimport "kLFOTypeFunction", nodecl, cinclude "pd_api.h">
+
+global PDSynthLFO: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {} -- inherits from SynthSignal
+
+global PlaydateSoundLFO: type <cimport "playdate_sound_lfo", nodecl, cinclude "pd_api.h"> = @record {
+  newLFO: function(type: LFOType): *PDSynthLFO,
+  freeLFO: function(lfo: *PDSynthLFO),
+
+  setType: function(lfo: *PDSynthLFO, type: LFOType),
+  setRate: function(lfo: *PDSynthLFO, rate: float32),
+  setPhase: function(lfo: *PDSynthLFO, phase: float32),
+  setCenter: function(lfo: *PDSynthLFO, center: float32),
+  setDepth: function(lfo: *PDSynthLFO, depth: float32),
+  setArpeggiation: function(lfo: *PDSynthLFO, nSteps: cint, steps: *float32),
+  setFunction: function(lfo: *PDSynthLFO, lfoFunc: function(lfo: *PDSynthLFO, userdata: pointer), userdata: pointer, interpolate: cint),
+  setDelay: function(lfo: *PDSynthLFO, holdoff: float32, ramptime: float32),
+  setRetrigger: function(lfo: *PDSynthLFO, flag: cint),
+
+  getValue: function(lfo: *PDSynthLFO): float32,
+
+  -- 1.10
+  setGlobal: function(lfo: *PDSynthLFO, global_: cint),
+
+  -- 2.2
+  setStartPhase: function(lfo: *PDSynthLFO, phase: float32),
+}
+
+global PDSynthEnvelope: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {} -- inherits from SynthSignal
+
+global PlaydateSoundEnvelope: type <cimport "playdate_sound_envelope", nodecl, cinclude "pd_api.h"> = @record {
+  newEnvelope: function(attack: float32, decay: float32, sustain: float32, release: float32): *PDSynthEnvelope,
+  freeEnvelope: function(env: *PDSynthEnvelope),
+
+  setAttack: function(env: *PDSynthEnvelope, attack: float32),
+  setDecay: function(env: *PDSynthEnvelope, decay: float32),
+  setSustain: function(env: *PDSynthEnvelope, sustain: float32),
+  setRelease: function(env: *PDSynthEnvelope, release: float32),
+
+  setLegato: function(env: *PDSynthEnvelope, flag: cint),
+  setRetrigger: function(lfo: *PDSynthEnvelope, flag: cint),
+
+  getValue: function(env: *PDSynthEnvelope): float32,
+
+  -- 1.13
+  setCurvature: function(env: *PDSynthEnvelope, amount: float32),
+  setVelocitySensitivity: function(env: *PDSynthEnvelope, velsens: float32),
+  setRateScaling: function(env: *PDSynthEnvelope, scaling: float32, start: MIDINote, end_: MIDINote),
+}
+
+global SoundWaveform: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global SoundWaveform.kWaveformSquare: SoundWaveform <cimport "kWaveformSquare", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformTriangle: SoundWaveform <cimport "kWaveformTriangle", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformSine: SoundWaveform <cimport "kWaveformSine", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformNoise: SoundWaveform <cimport "kWaveformNoise", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformSawtooth: SoundWaveform <cimport "kWaveformSawtooth", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformPOPhase: SoundWaveform <cimport "kWaveformPOPhase", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformPODigital: SoundWaveform <cimport "kWaveformPODigital", nodecl, cinclude "pd_api.h">
+global SoundWaveform.kWaveformPOVosim: SoundWaveform <cimport "kWaveformPOVosim", nodecl, cinclude "pd_api.h">
+
+-- generator render callback
+-- samples are in Q8.24 format. left is either the left channel or the single mono channel,
+-- right is non-NULL only if the stereo flag was set in the setGenerator() call.
+-- nsamples is at most 256 but may be shorter
+-- rate is Q0.32 per-frame phase step, drate is per-frame rate step (i.e., do rate += drate every frame)
+-- return value is the number of sample frames rendered
+global synthRenderFunc: type = @function(userdata: pointer, left: *int32, right: *int32, nsamples: cint, rate: uint32, drate: int32): cint
+
+-- generator event callbacks
+global synthNoteOnFunc: type = @function(userdata: pointer, note: MIDINote, velocity: float32, len: float32) -- len == -1 if indefinite
+global synthReleaseFunc: type = @function(userdata: pointer, stop: cint)
+global synthSetParameterFunc: type = @function(userdata: pointer, parameter: cint, value: float32): cint
+global synthDeallocFunc: type = @function(userdata: pointer)
+global synthCopyUserdata: type = @function(userdata: pointer): pointer
+
+-- PDSynth extends SoundSource
+global PDSynth: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundSynth: type <cimport "playdate_sound_synth", nodecl, cinclude "pd_api.h"> = @record {
+  newSynth: function(): *PDSynth,
+  freeSynth: function(synth: *PDSynth),
+
+  setWaveform: function(synth: *PDSynth, wave: SoundWaveform),
+  setGenerator_deprecated: function(synth: *PDSynth, stereo: cint, render: synthRenderFunc, noteOn: synthNoteOnFunc, release: synthReleaseFunc, setparam: synthSetParameterFunc, dealloc: synthDeallocFunc, userdata: pointer),
+  setSample: function(synth: *PDSynth, sample: *AudioSample, sustainStart: uint32, sustainEnd: uint32),
+
+  setAttackTime: function(synth: *PDSynth, attack: float32),
+  setDecayTime: function(synth: *PDSynth, decay: float32),
+  setSustainLevel: function(synth: *PDSynth, sustain: float32),
+  setReleaseTime: function(synth: *PDSynth, release: float32),
+
+  setTranspose: function(synth: *PDSynth, halfSteps: float32),
+
+  setFrequencyModulator: function(synth: *PDSynth, mod: *PDSynthSignalValue),
+  getFrequencyModulator: function(synth: *PDSynth): *PDSynthSignalValue,
+  setAmplitudeModulator: function(synth: *PDSynth, mod: *PDSynthSignalValue),
+  getAmplitudeModulator: function(synth: *PDSynth): *PDSynthSignalValue,
+
+  getParameterCount: function(synth: *PDSynth): cint,
+  setParameter: function(synth: *PDSynth, parameter: cint, value: float32): cint,
+  setParameterModulator: function(synth: *PDSynth, parameter: cint, mod: *PDSynthSignalValue),
+  getParameterModulator: function(synth: *PDSynth, parameter: cint): *PDSynthSignalValue,
+
+  playNote: function(synth: *PDSynth, freq: float32, vel: float32, len: float32, when: uint32), -- len == -1 for indefinite
+  playMIDINote: function(synth: *PDSynth, note: MIDINote, vel: float32, len: float32, when: uint32), -- len == -1 for indefinite
+  noteOff: function(synth: *PDSynth, when: uint32), -- move to release part of envelope
+  stop: function(synth: *PDSynth), -- stop immediately
+
+  setVolume: function(synth: *PDSynth, left: float32, right: float32),
+  getVolume: function(synth: *PDSynth, left: *float32, right: *float32),
+
+  isPlaying: function(synth: *PDSynth): cint,
+
+  -- 1.13
+  getEnvelope: function(synth: *PDSynth): *PDSynthEnvelope, -- synth keeps ownership--don't free this!
+
+  -- 2.2
+  setWavetable: function(synth: *PDSynth, sample: *AudioSample, log2size: cint, columns: cint, rows: cint): cint,
+
+  -- 2.4
+  setGenerator: function(synth: *PDSynth, stereo: cint, render: synthRenderFunc, noteOn: synthNoteOnFunc, release: synthReleaseFunc, setparam: synthSetParameterFunc, dealloc: synthDeallocFunc, copyUserdata: synthCopyUserdata, userdata: pointer),
+  copy: function(synth: *PDSynth): *PDSynth,
+
+  -- 2.6
+  clearEnvelope: function(synth: *PDSynth),
+}
+
+-- SEQUENCES
+
+-- a ControlSignal is a PDSynthSignal with values specified on a timeline
+
+global ControlSignal: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateControlSignal: type <cimport "playdate_control_signal", nodecl, cinclude "pd_api.h"> = @record {
+  newSignal: function(): *ControlSignal,
+  freeSignal: function(signal: *ControlSignal),
+  clearEvents: function(control: *ControlSignal),
+  addEvent: function(control: *ControlSignal, step: cint, value: float32, interpolate: cint),
+  removeEvent: function(control: *ControlSignal, step: cint),
+  getMIDIControllerNumber: function(control: *ControlSignal): cint,
+}
+
+-- a PDSynthInstrument is a bank of voices for playing a sequence track
+
+global PDSynthInstrument: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundInstrument: type <cimport "playdate_sound_instrument", nodecl, cinclude "pd_api.h"> = @record {
+  newInstrument: function(): *PDSynthInstrument,
+  freeInstrument: function(inst: *PDSynthInstrument),
+  addVoice: function(inst: *PDSynthInstrument, synth: *PDSynth, rangeStart: MIDINote, rangeEnd: MIDINote, transpose: float32): cint,
+  playNote: function(inst: *PDSynthInstrument, frequency: float32, vel: float32, len: float32, when: uint32): *PDSynth,
+  playMIDINote: function(inst: *PDSynthInstrument, note: MIDINote, vel: float32, len: float32, when: uint32): *PDSynth,
+  setPitchBend: function(inst: *PDSynthInstrument, bend: float32),
+  setPitchBendRange: function(inst: *PDSynthInstrument, halfSteps: float32),
+  setTranspose: function(inst: *PDSynthInstrument, halfSteps: float32),
+  noteOff: function(inst: *PDSynthInstrument, note: MIDINote, when: uint32),
+  allNotesOff: function(inst: *PDSynthInstrument, when: uint32),
+  setVolume: function(inst: *PDSynthInstrument, left: float32, right: float32),
+  getVolume: function(inst: *PDSynthInstrument, left: *float32, right: *float32),
+  activeVoiceCount: function(inst: *PDSynthInstrument): cint,
+}
+
+-- a SequenceTrack contains notes for an instrument to play
+
+global SequenceTrack: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundTrack: type <cimport "playdate_sound_track", nodecl, cinclude "pd_api.h"> = @record {
+  newTrack: function(): *SequenceTrack,
+  freeTrack: function(track: *SequenceTrack),
+
+  setInstrument: function(track: *SequenceTrack, inst: *PDSynthInstrument),
+  getInstrument: function(track: *SequenceTrack): *PDSynthInstrument,
+
+  addNoteEvent: function(track: *SequenceTrack, step: uint32, len: uint32, note: MIDINote, velocity: float32),
+  removeNoteEvent: function(track: *SequenceTrack, step: uint32, note: MIDINote),
+  clearNotes: function(track: *SequenceTrack),
+
+  getControlSignalCount: function(track: *SequenceTrack): cint,
+  getControlSignal: function(track: *SequenceTrack, idx: cint): *ControlSignal,
+  clearControlEvents: function(track: *SequenceTrack),
+
+  getPolyphony: function(track: *SequenceTrack): cint,
+  activeVoiceCount: function(track: *SequenceTrack): cint,
+
+  setMuted: function(track: *SequenceTrack, mute: cint),
+
+  -- 1.1
+  getLength: function(track: *SequenceTrack): uint32, -- in steps, includes full last note
+  getIndexForStep: function(track: *SequenceTrack, step: uint32): cint,
+  getNoteAtIndex: function(track: *SequenceTrack, index: cint, outStep: *uint32, outLen: *uint32, outNote: *MIDINote, outVelocity: *float32): cint,
+
+  -- 1.10
+  getSignalForController: function(track: *SequenceTrack, controller: cint, create: cint): *ControlSignal,
+}
+
+-- and a SoundSequence is a collection of tracks, along with control info like tempo and loops
+
+global SoundSequence: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global SequenceFinishedCallback: type = @function(seq: *SoundSequence, userdata: pointer)
+
+global PlaydateSoundSequence: type <cimport "playdate_sound_sequence", nodecl, cinclude "pd_api.h"> = @record {
+  newSequence: function(): *SoundSequence,
+  freeSequence: function(sequence: *SoundSequence),
+
+  loadMIDIFile: function(seq: *SoundSequence, path: cstring): cint,
+  getTime: function(seq: *SoundSequence): uint32,
+  setTime: function(seq: *SoundSequence, time: uint32),
+  setLoops: function(seq: *SoundSequence, loopstart: cint, loopend: cint, loops: cint),
+  getTempo_deprecated: function(seq: *SoundSequence): cint,
+  setTempo: function(seq: *SoundSequence, stepsPerSecond: float32),
+  getTrackCount: function(seq: *SoundSequence): cint,
+  addTrack: function(seq: *SoundSequence): *SequenceTrack,
+  getTrackAtIndex: function(seq: *SoundSequence, track: cuint): *SequenceTrack,
+  setTrackAtIndex: function(seq: *SoundSequence, track: *SequenceTrack, idx: cuint),
+  allNotesOff: function(seq: *SoundSequence),
+
+  -- 1.1
+  isPlaying: function(seq: *SoundSequence): cint,
+  getLength: function(seq: *SoundSequence): uint32, -- in steps, includes full last note
+  play: function(seq: *SoundSequence, finishCallback: SequenceFinishedCallback, userdata: pointer),
+  stop: function(seq: *SoundSequence),
+  getCurrentStep: function(seq: *SoundSequence, timeOffset: *cint): cint,
+  setCurrentStep: function(seq: *SoundSequence, step: cint, timeOffset: cint, playNotes: cint),
+
+  -- 2.5
+  getTempo: function(seq: *SoundSequence): float32,
+}
+
+
+-- EFFECTS
+
+-- A SoundEffect processes the output of a channel's SoundSources
+
+global TwoPoleFilter: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global TwoPoleFilterType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global TwoPoleFilterType.kFilterTypeLowPass: TwoPoleFilterType <cimport "kFilterTypeLowPass", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypeHighPass: TwoPoleFilterType <cimport "kFilterTypeHighPass", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypeBandPass: TwoPoleFilterType <cimport "kFilterTypeBandPass", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypeNotch: TwoPoleFilterType <cimport "kFilterTypeNotch", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypePEQ: TwoPoleFilterType <cimport "kFilterTypePEQ", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypeLowShelf: TwoPoleFilterType <cimport "kFilterTypeLowShelf", nodecl, cinclude "pd_api.h">
+global TwoPoleFilterType.kFilterTypeHighShelf: TwoPoleFilterType <cimport "kFilterTypeHighShelf", nodecl, cinclude "pd_api.h">
+
+global PlaydateSoundEffectTwoPoleFilter: type <cimport "playdate_sound_effect_twopolefilter", nodecl, cinclude "pd_api.h"> = @record {
+  newFilter: function(): *TwoPoleFilter,
+  freeFilter: function(filter: *TwoPoleFilter),
+  setType: function(filter: *TwoPoleFilter, type: TwoPoleFilterType),
+  setFrequency: function(filter: *TwoPoleFilter, frequency: float32),
+  setFrequencyModulator: function(filter: *TwoPoleFilter, signal: *PDSynthSignalValue),
+  getFrequencyModulator: function(filter: *TwoPoleFilter): *PDSynthSignalValue,
+  setGain: function(filter: *TwoPoleFilter, gain: float32),
+  setResonance: function(filter: *TwoPoleFilter, resonance: float32),
+  setResonanceModulator: function(filter: *TwoPoleFilter, signal: *PDSynthSignalValue),
+  getResonanceModulator: function(filter: *TwoPoleFilter): *PDSynthSignalValue,
+}
+
+global OnePoleFilter: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundEffectOnePoleFilter: type <cimport "playdate_sound_effect_onepolefilter", nodecl, cinclude "pd_api.h"> = @record {
+  newFilter: function(): *OnePoleFilter,
+  freeFilter: function(filter: *OnePoleFilter),
+  setParameter: function(filter: *OnePoleFilter, parameter: float32),
+  setParameterModulator: function(filter: *OnePoleFilter, signal: *PDSynthSignalValue),
+  getParameterModulator: function(filter: *OnePoleFilter): *PDSynthSignalValue,
+}
+
+global BitCrusher: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundEffectBitcrusher: type <cimport "playdate_sound_effect_bitcrusher", nodecl, cinclude "pd_api.h"> = @record {
+  newBitCrusher: function(): *BitCrusher,
+  freeBitCrusher: function(filter: *BitCrusher),
+  setAmount: function(filter: *BitCrusher, amount: float32),
+  setAmountModulator: function(filter: *BitCrusher, signal: *PDSynthSignalValue),
+  getAmountModulator: function(filter: *BitCrusher): *PDSynthSignalValue,
+  setUndersampling: function(filter: *BitCrusher, undersampling: float32),
+  setUndersampleModulator: function(filter: *BitCrusher, signal: *PDSynthSignalValue),
+  getUndersampleModulator: function(filter: *BitCrusher): *PDSynthSignalValue,
+}
+
+global RingModulator: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundEffectRingModulator: type <cimport "playdate_sound_effect_ringmodulator", nodecl, cinclude "pd_api.h"> = @record {
+  newRingmod: function(): *RingModulator,
+  freeRingmod: function(filter: *RingModulator),
+  setFrequency: function(filter: *RingModulator, frequency: float32),
+  setFrequencyModulator: function(filter: *RingModulator, signal: *PDSynthSignalValue),
+  getFrequencyModulator: function(filter: *RingModulator): *PDSynthSignalValue,
+}
+
+global DelayLine: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global DelayLineTap: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundEffectDelayLine: type <cimport "playdate_sound_effect_delayline", nodecl, cinclude "pd_api.h"> = @record {
+  newDelayLine: function(length: cint, stereo: cint): *DelayLine,
+  freeDelayLine: function(filter: *DelayLine),
+  setLength: function(d: *DelayLine, frames: cint),
+  setFeedback: function(d: *DelayLine, fb: float32),
+  addTap: function(d: *DelayLine, delay: cint): *DelayLineTap,
+
+  -- note that DelayLineTap is a SoundSource, not a SoundEffect
+  freeTap: function(tap: *DelayLineTap),
+  setTapDelay: function(t: *DelayLineTap, frames: cint),
+  setTapDelayModulator: function(t: *DelayLineTap, mod: *PDSynthSignalValue),
+  getTapDelayModulator: function(t: *DelayLineTap): *PDSynthSignalValue,
+  setTapChannelsFlipped: function(t: *DelayLineTap, flip: cint),
+}
+
+global Overdrive: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PlaydateSoundEffectOverdrive: type <cimport "playdate_sound_effect_overdrive", nodecl, cinclude "pd_api.h"> = @record {
+  newOverdrive: function(): *Overdrive,
+  freeOverdrive: function(filter: *Overdrive),
+  setGain: function(o: *Overdrive, gain: float32),
+  setLimit: function(o: *Overdrive, limit: float32),
+  setLimitModulator: function(o: *Overdrive, mod: *PDSynthSignalValue),
+  getLimitModulator: function(o: *Overdrive): *PDSynthSignalValue,
+  setOffset: function(o: *Overdrive, offset: float32),
+  setOffsetModulator: function(o: *Overdrive, mod: *PDSynthSignalValue),
+  getOffsetModulator: function(o: *Overdrive): *PDSynthSignalValue,
+}
+
+
+global SoundEffect: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global EffectCallback: type = @function(e: *SoundEffect, left: *int32, right: *int32, samples: cint, bufactive: cint) -- samples are in signed q8.24 format
+
+global PlaydateSoundEffect: type <cimport "playdate_sound_effect", nodecl, cinclude "pd_api.h"> = @record {
+  newEffect: function(proc: *EffectCallback, userdata: pointer): *SoundEffect,
+  freeEffect: function(effect: *SoundEffect),
+
+  setMix: function(effect: *SoundEffect, level: float32),
+  setMixModulator: function(effect: *SoundEffect, signal: *PDSynthSignalValue),
+  getMixModulator: function(effect: *SoundEffect): *PDSynthSignalValue,
+
+  setUserdata: function(effect: *SoundEffect, userdata: pointer),
+  getUserdata: function(effect: *SoundEffect): pointer,
+
+  twopolefilter: *PlaydateSoundEffectTwoPoleFilter,
+  onepolefilter: *PlaydateSoundEffectOnePoleFilter,
+  bitcrusher: *PlaydateSoundEffectBitcrusher,
+  ringmodulator: *PlaydateSoundEffectRingModulator,
+  delayline: *PlaydateSoundEffectDelayLine,
+  overdrive: *PlaydateSoundEffectOverdrive,
+}
+
+-- A SoundChannel contains SoundSources and SoundEffects
+
+global SoundChannel: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global AudioSourceFunction: type = @function(context: pointer, left: *int16, right: *int16, len: cint): cint -- len is # of samples in each buffer, function should return 1 if it produced output
+
+global PlaydateSoundChannel: type <cimport "playdate_sound_channel", nodecl, cinclude "pd_api.h"> = @record {
+  newChannel: function(): *SoundChannel,
+  freeChannel: function(channel: *SoundChannel),
+  addSource: function(channel: *SoundChannel, source: *SoundSource): cint,
+  removeSource: function(channel: *SoundChannel, source: *SoundSource): cint,
+  addCallbackSource: function(channel: *SoundChannel, callback: *AudioSourceFunction, context: pointer, stereo: cint): *SoundSource,
+  addEffect: function(channel: *SoundChannel, effect: *SoundEffect): cint,
+  removeEffect: function(channel: *SoundChannel, effect: *SoundEffect): cint,
+  setVolume: function(channel: *SoundChannel, volume: float32),
+  getVolume: function(channel: *SoundChannel): float32,
+  setVolumeModulator: function(channel: *SoundChannel, mod: *PDSynthSignalValue),
+  getVolumeModulator: function(channel: *SoundChannel): *PDSynthSignalValue,
+  setPan: function(channel: *SoundChannel, pan: float32),
+  setPanModulator: function(channel: *SoundChannel, mod: *PDSynthSignalValue),
+  getPanModulator: function(channel: *SoundChannel): *PDSynthSignalValue,
+  getDryLevelSignal: function(channel: *SoundChannel): *PDSynthSignalValue,
+  getWetLevelSignal: function(channel: *SoundChannel): *PDSynthSignalValue,
+}
+
+global RecordCallback: type = @function(context: pointer, buffer: *int16, length: cint) -- data is mono
+
+global MicSource: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global MicSource.kMicInputAutodetect: MicSource <cimport "kMicInputAutodetect", nodecl, cinclude "pd_api.h">
+global MicSource.kMicInputInternal: MicSource <cimport "kMicInputInternal", nodecl, cinclude "pd_api.h">
+global MicSource.kMicInputHeadset: MicSource <cimport "kMicInputHeadset", nodecl, cinclude "pd_api.h">
+
+
+global PlaydateSound: type <cimport "playdate_sound", nodecl, cinclude "pd_api.h"> = @record {
+  channel: *PlaydateSoundChannel,
+  fileplayer: *PlaydateSoundFilePlayer,
+  sample: *PlaydateSoundSample,
+  sampleplayer: *PlaydateSoundSamplePlayer,
+  synth: *PlaydateSoundSynth,
+  sequence: *PlaydateSoundSequence,
+  effect: *PlaydateSoundEffect,
+  lfo: *PlaydateSoundLFO,
+  envelope: *PlaydateSoundEnvelope,
+  source: *PlaydateSoundSource,
+  controlsignal: *PlaydateControlSignal,
+  track: *PlaydateSoundTrack,
+  instrument: *PlaydateSoundInstrument,
+
+  getCurrentTime: function(): uint32,
+  addSource: function(callback: *AudioSourceFunction, context: pointer, stereo: cint): *SoundSource,
+
+  getDefaultChannel: function(): *SoundChannel,
+
+  addChannel: function(channel: *SoundChannel): cint,
+  removeChannel: function(channel: *SoundChannel): cint,
+
+  setMicCallback: function(callback: *RecordCallback, context: pointer, source: MicSource): cint,
+  getHeadphoneState: function(headphone: *cint, headsetmic: *cint, changeCallback: function(headphone: cint, mic: cint)),
+  setOutputsActive: function(headphone: cint, speaker: cint),
+
+  -- 1.5
+  removeSource: function(source: *SoundSource): cint,
+
+  -- 1.12
+  signal: *PlaydateSoundSignal,
+
+  -- 2.2
+  getError: function(): cstring,
+}
