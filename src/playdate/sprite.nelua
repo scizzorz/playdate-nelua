@@ -74,8 +74,8 @@ global PlaydateSprite: type <cimport "playdate_sprite", nodecl, cinclude "pd_api
   moveTo: function(sprite: *LCDSprite, x: float32, y: float32),
   moveBy: function(sprite: *LCDSprite, dx: float32, dy: float32),
 
-  setImage: function(sprite: *LCDSprite, image: *Bitmap, flip: Flip),
-  getImage: function(sprite: *LCDSprite): *Bitmap,
+  setImage: function(sprite: *LCDSprite, image: *LCDBitmap, flip: Flip),
+  getImage: function(sprite: *LCDSprite): *LCDBitmap,
   setSize: function(s: *LCDSprite, width: float32, height: float32),
   setZIndex: function(sprite: *LCDSprite, zIndex: int16),
   getZIndex: function(sprite: *LCDSprite): int16,
@@ -83,7 +83,7 @@ global PlaydateSprite: type <cimport "playdate_sprite", nodecl, cinclude "pd_api
   setDrawMode: function(sprite: *LCDSprite, mode: DrawMode),
   setImageFlip: function(sprite: *LCDSprite, flip: Flip),
   getImageFlip: function(sprite: *LCDSprite): Flip,
-  setStencil: function(sprite: *LCDSprite, stencil: *Bitmap), -- deprecated in favor of setStencilImage()
+  setStencil: function(sprite: *LCDSprite, stencil: *LCDBitmap), -- deprecated in favor of setStencilImage()
 
   setClipRect: function(sprite: *LCDSprite, clipRect: LCDRect),
   clearClipRect: function(sprite: *LCDSprite),
@@ -135,13 +135,13 @@ global PlaydateSprite: type <cimport "playdate_sprite", nodecl, cinclude "pd_api
   getUserdata: function(sprite: *LCDSprite): pointer,
 
   -- added in 1.10
-  setStencilImage: function(sprite: *LCDSprite, stencil: *Bitmap, tile: cint),
+  setStencilImage: function(sprite: *LCDSprite, stencil: *LCDBitmap, tile: cint),
 
   -- 2.1
   setCenter: function(s: *LCDSprite, x: float32, y: float32),
   getCenter: function(s: *LCDSprite, x: *float32, y: *float32),
 
   -- 2.7
-  setTilemap: function(s: *LCDSprite, tilemap: *TileMap),
-  getTilemap: function(s: *LCDSprite): *TileMap,
+  setTilemap: function(s: *LCDSprite, tilemap: *LCDTileMap),
+  getTilemap: function(s: *LCDSprite): *LCDTileMap,
 }

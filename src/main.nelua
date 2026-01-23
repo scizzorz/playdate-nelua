@@ -2,7 +2,7 @@ require("./playdate/init.nelua")
 require("./playdate/eventhandler.nelua")
 
 local fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft"
-local font: *Font
+local font: *LCDFont
 
 global TEXT_WIDTH = 86
 global TEXT_HEIGHT = 16

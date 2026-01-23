@@ -65,7 +65,7 @@ global PlaydateLua: type <cimport "playdate_lua", nodecl, cinclude "pd_api.h"> =
   getArgBytes: function(pos: cint, outlen: *csize): cstring,
   getArgObject: function(pos: cint, type: cstring, outud: **LuaUDObject): pointer,
 
-  getBitmap: function(pos: cint): *Bitmap,
+  getBitmap: function(pos: cint): *LCDBitmap,
   getSprite: function(pos: cint): *LCDSprite,
 
   -- for returning values back to Lua
@@ -75,7 +75,7 @@ global PlaydateLua: type <cimport "playdate_lua", nodecl, cinclude "pd_api.h"> =
   pushFloat: function(val: float32),
   pushString: function(str: cstring),
   pushBytes: function(str: cstring, len: csize),
-  pushBitmap: function(bitmap: *Bitmap),
+  pushBitmap: function(bitmap: *LCDBitmap),
   pushSprite: function(sprite: *LCDSprite),
 
   pushObject: function(obj: pointer, type: cstring, nValues: cint): *LuaUDObject,
