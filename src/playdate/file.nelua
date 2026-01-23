@@ -1,0 +1,48 @@
+global File: type <cimport "SDFile", ctypedef, cinclude "pd_api.h"> = @record {}
+
+global FileOptions: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global FileOptions.Read: FileOptions <cimport "kFileRead", nodecl, cinclude "pd_api.h">
+global FileOptions.ReadData: FileOptions <cimport "kFileReadData", nodecl, cinclude "pd_api.h">
+global FileOptions.Write: FileOptions <cimport "kFileWrite", nodecl, cinclude "pd_api.h">
+
+global LCDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  left: cint,
+  right: cint, -- not inclusive
+  top: cint,
+  bottom: cint, -- not inclusive
+}
+
+global FileStat: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  isdir: cint,
+  size: cuint,
+  m_year: cint,
+  m_month: cint,
+  m_day: cint,
+  m_hour: cint,
+  m_minute: cint,
+  m_second: cint,
+}
+
+global SEEK_SET <const> = 0
+global SEEK_CUR <const> = 1
+global SEEK_END <const> = 2
+
+global PlaydateFile: type <cimport "playdate_file", nodecl, cinclude "pd_api.h"> = @record {
+  geterr: function(): cstring,
+
+  listfiles: function(path: cstring, callback: function(path: cstring, userdata: pointer), userdata: pointer, showhidden: cint): cint,
+  stat: function(path: cstring, stat: *FileStat): cint,
+  mkdir: function(path: cstring): cint,
+  unlink: function(name: cstring, recursive: cint): cint,
+  rename: function(from: cstring, to: cstring): cint,
+
+  open: function(name: cstring, mode: FileOptions): *File,
+  close: function(file: *File): cint,
+  read: function(file: *File, buf: pointer, len: cuint): cint,
+  write: function(file: *File, buf: pointer, len: cuint): cint,
+  flush: function(file: *File): cint,
+  tell: function(file: *File): cint,
+  seek: function(file: *File, pos: cint, whence: cint): cint,
+}
