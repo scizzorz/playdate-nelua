@@ -54,12 +54,13 @@ global PDInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {
   language: integer,
 }
 
--- FIXME PDMenuItem?
+--[[ opaque types ]]
+global PDMenuItem: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
 --[[ type aliases ]]
-global CallbackFunction: type = @function(userdata: pointer): void
-global MenuItemCallbackFunction: type = @function(userdata: pointer): void
-global ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
+local CallbackFunction: type = @function(userdata: pointer): void
+local MenuItemCallbackFunction: type = @function(userdata: pointer): void
+local ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
 
 global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.h"> = @record {
   realloc: function(ptr: pointer, size: csize): pointer, -- ptr = NULL -> malloc, size = 0 -> free
@@ -84,22 +85,18 @@ global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.
   getFlipped: function(): cint,
   setAutoLockDisabled: function(disable: cint),
 
-  --[[ FIXME
-	void (*setMenuImage)(LCDBitmap* bitmap, int xOffset);
-	PDMenuItem* (*addMenuItem)(const char *title, PDMenuItemCallbackFunction* callback, void* userdata);
-	PDMenuItem* (*addCheckmarkMenuItem)(const char *title, int value, PDMenuItemCallbackFunction* callback, void* userdata);
-	PDMenuItem* (*addOptionsMenuItem)(const char *title, const char** optionTitles, int optionsCount, PDMenuItemCallbackFunction* f, void* userdata);
-  ]]
+  setMenuImage: function(bitmap: *LCDBitmap, xOffset: cint),
+  addMenuItem: function(title: cstring, callback: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
+  addCheckmarkMenuItem: function(title: cstring, value: cint, callback: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
+  addOptionsMenuItem: function(title: cstring, optionTitles: *cstring, optionsCount: cint, f: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
   removeAllMenuItems: function(),
-  --[[ FIXME
-	void (*removeMenuItem)(PDMenuItem *menuItem);
-	int (*getMenuItemValue)(PDMenuItem *menuItem);
-	void (*setMenuItemValue)(PDMenuItem *menuItem, int value);
-	const char* (*getMenuItemTitle)(PDMenuItem *menuItem);
-	void (*setMenuItemTitle)(PDMenuItem *menuItem, const char *title);
-	void* (*getMenuItemUserdata)(PDMenuItem *menuItem);
-	void (*setMenuItemUserdata)(PDMenuItem *menuItem, void *ud);
-  ]]
+  removeMenuItem: function(menuItem: *PDMenuItem),
+  getMenuItemValue: function(menuItem: *PDMenuItem): cint,
+  setMenuItemValue: function(menuItem: *PDMenuItem, value: cint),
+  getMenuItemTitle: function(menuItem: *PDMenuItem): cstring,
+  setMenuItemTitle: function(menuItem: *PDMenuItem, title: cstring),
+  getMenuItemUserdata: function(menuItem: *PDMenuItem): pointer,
+  setMenuItemUserdata: function(menuItem: *PDMenuItem, ud: pointer),
 
   getReduceFlashing: function(): cint,
 
