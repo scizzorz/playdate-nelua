@@ -65,10 +65,8 @@ global StringEncoding.ASCII: StringEncoding <cimport "kASCIIEncoding", nodecl, c
 global StringEncoding.UTF8: StringEncoding <cimport "kUTF8Encoding", nodecl, cinclude "pd_api.h">
 global StringEncoding.LE16bit: StringEncoding <cimport "k16BitLEEncoding", nodecl, cinclude "pd_api.h">
 
-global LCDPattern: type = @[16]uint8
--- FIXME what is this?
--- typedef uintptr_t LCDColor; // LCDSolidColor or pointer to LCDPattern
--- global LCDColor: type
+global Pattern: type = @[16]uint8
+global ColorOrPattern: type = @usize
 
 -- PDPolygonFillRule
 global PolygonFillRule: type <cimport "PDPolygonFillRule", nodecl, cinclude "pd_api.h"> = @enum {
@@ -108,36 +106,168 @@ global FilePlayer: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
 -- playdate_video
 global PlaydateVideo: type <cimport "playdate_video", ctypedef, cinclude "pd_api.h"> = @record {
+  loadVideo: function(path: cstring): *VideoPlayer,
+  freePlayer: function(p: *VideoPlayer),
+  setContext: function(p: *VideoPlayer, context: *Bitmap): cint,
+  useScreenContext: function(p: *VideoPlayer),
+  renderFrame: function(p: *VideoPlayer, n: cint): cint,
+  getError: function(p: *VideoPlayer): cstring,
+  getInfo: function(p: *VideoPlayer, outWidth: *cint, outHeight: *cint, outFrameRate: *float32, outFrameCount: *cint, outCurrentFrame: *cint),
+  getContext: function(p: *VideoPlayer): *Bitmap,
 }
 
 -- playdate_videostream
 global PlaydateVideoStream: type <cimport "playdate_videostream", ctypedef, cinclude "pd_api.h"> = @record {
+  newPlayer: function(): *StreamPlayer,
+  freePlayer: function(p: *StreamPlayer),
+
+  setBufferSize: function(p: *StreamPlayer, video: cint, audio: cint),
+
+  -- FIXME
+  -- setFile: function(p: *StreamPlayer, file: *SDFile),
+  setHTTPConnection: function(p: *StreamPlayer, conn: *HTTPConnection),
+
+  getFilePlayer: function(p: *StreamPlayer): *FilePlayer,
+  getVideoPlayer: function(p: *StreamPlayer): *VideoPlayer,
+
+  --setContext: function(p: *StreamPlayer, context: *Bitmap): cint,
+  --getContext: function(p: *StreamPlayer): *Bitmap,
+
+  -- returns true if it drew a frame, else false
+  update: function(p: *StreamPlayer): boolean,
+
+  getBufferedFrameCount: function(p: *StreamPlayer): cint,
+
+  getBytesRead: function(p: *StreamPlayer): uint32,
+
+  -- 3.0
+  setTCPConnection: function(p: *StreamPlayer, conn: *TCPConnection),
 }
 
 -- playdate_tilemap
 global PlaydateTilemap: type <cimport "playdate_tilemap", ctypedef, cinclude "pd_api.h"> = @record {
+  newTilemap: function(): *TileMap,
+  freeTilemap: function(m: *TileMap),
+
+  setImageTable: function(m: *TileMap, table: *BitmapTable),
+  getImageTable: function(m: *TileMap): *BitmapTable,
+
+  setSize: function(m: *TileMap, tilesWide: cint, tilesHigh: cint),
+  getSize: function(m: *TileMap, tilesWide: *cint, tilesHigh: *cint),
+  getPixelSize: function(m: *TileMap, outWidth: *uint32, outHeight: *uint32),
+
+  setTiles: function(m: *TileMap, indexes: *uint16, count: cint, rowwidth: cint),
+
+  setTileAtPosition: function(m: *TileMap, x: cint, y: cint, idx: uint16),
+  getTileAtPosition: function(m: *TileMap, x: cint, y: cint): cint,
+
+  drawAtPoint: function(m: *TileMap, x: float32, y: float32),
 }
 
 -- playdate_graphics
 global PlaydateGraphics: type <cimport "playdate_graphics", ctypedef, cinclude "pd_api.h"> = @record {
-  -- FIXME this ain't right, it uses that union thing
-  -- clear: function(color: Color),
+  video: *PlaydateVideo,
+
+  -- Drawing Functions
+  clear: function(color: ColorOrPattern),
   setBackgroundColor: function(color: Color),
-
+  setStencil: function(stencil: *Bitmap), -- deprecated in favor of setStencilImage, which adds a "tile" flag
+  setDrawMode: function(mode: DrawMode): DrawMode,
+  setDrawOffset: function(dx: cint, dy: cint),
+  setClipRect: function(x: cint, y: cint, width: cint, height: cint),
   clearClipRect: function(),
-
+  setLineCapStyle: function(endCapStyle: LineCapStyle),
+  setFont: function(font: *Font),
+  setTextTracking: function(tracking: cint),
   pushContext: function(target: *Bitmap),
   popContext: function(),
 
   drawBitmap: function(bitmap: *Bitmap, x: cint, y: cint, flip: Flip),
+  tileBitmap: function(bitmap: *Bitmap, x: cint, y: cint, width: cint, height: cint, flip: Flip),
+  drawLine: function(x1: cint, y1: cint, x2: cint, y2: cint, width: cint, color: ColorOrPattern),
+  fillTriangle: function(x1: cint, y1: cint, x2: cint, y2: cint, x3: cint, y3: cint, color: ColorOrPattern),
+  drawRect: function(x: cint, y: cint, width: cint, height: cint, color: ColorOrPattern),
+  fillRect: function(x: cint, y: cint, width: cint, height: cint, color: ColorOrPattern),
+  drawEllipse: function(x: cint, y: cint, width: cint, height: cint, lineWidth: cint, startAngle: float32, endAngle: float32, color: ColorOrPattern), -- stroked inside the rect
+  fillEllipse: function(x: cint, y: cint, width: cint, height: cint, startAngle: float32, endAngle: float32, color: ColorOrPattern),
+  drawScaledBitmap: function(bitmap: *Bitmap, x: cint, y: cint, xscale: float32, yscale: float32),
+  drawText: function(text: pointer, len: csize, encoding: StringEncoding, x: cint, y: cint): cint,
 
-  -- FIXME this uses the union thing
-  fillRect: function(x: cint, y: cint, width: cint, height: cint, color: Color),
-
-  -- Bitmap
-  -- FIXME this uses the union thing
-  newBitmap: function(width: cint, height: cint, color: Color): *Bitmap,
-  freeBitmap: function(bitmap: *Bitmap),
+  -- LCDBitmap
+  newBitmap: function(width: cint, height: cint, bgcolor: ColorOrPattern): *Bitmap,
+  freeBitmap: function(unnamed0: *Bitmap),
   loadBitmap: function(path: cstring, outerr: *cstring): *Bitmap,
   copyBitmap: function(bitmap: *Bitmap): *Bitmap,
+  loadIntoBitmap: function(path: cstring, bitmap: *Bitmap, outerr: *cstring),
+  getBitmapData: function(bitmap: *Bitmap, width: *cint, height: *cint, rowbytes: *cint, mask: **uint8, data: **uint8),
+  clearBitmap: function(bitmap: *Bitmap, bgcolor: ColorOrPattern),
+  rotatedBitmap: function(bitmap: *Bitmap, rotation: float32, xscale: float32, yscale: float32, allocedSize: *cint): *Bitmap,
+
+  -- LCDBitmapTable
+  newBitmapTable: function(count: cint, width: cint, height: cint): *BitmapTable,
+  freeBitmapTable: function(table: *BitmapTable),
+  loadBitmapTable: function(path: cstring, outerr: *cstring): *BitmapTable,
+  loadIntoBitmapTable: function(path: cstring, table: *BitmapTable, outerr: *cstring),
+  getTableBitmap: function(table: *BitmapTable, idx: cint): *Bitmap,
+
+  -- LCDFont
+  loadFont: function(path: cstring, outErr: *cstring): *Font,
+  getFontPage: function(font: *Font, c: uint32): *FontPage,
+  getPageGlyph: function(page: *FontPage, c: uint32, bitmap: **Bitmap, advance: *cint): *FontGlyph,
+  getGlyphKerning: function(glyph: *FontGlyph, glyphcode: uint32, nextcode: uint32): cint,
+  getTextWidth: function(font: *Font, text: pointer, len: csize, encoding: StringEncoding, tracking: cint): cint,
+
+  -- raw framebuffer access
+  getFrame: function(): *uint8, -- row stride = LCD_ROWSIZE
+  getDisplayFrame: function(): *uint8, -- row stride = LCD_ROWSIZE
+  getDebugBitmap: function(): *Bitmap, -- valid in simulator only, function is NULL on device
+  copyFrameBufferBitmap: function(): *Bitmap,
+  markUpdatedRows: function(start: cint, end_: cint),
+  display: function(),
+
+  -- misc util.
+  setColorToPattern: function(color: *ColorOrPattern, bitmap: *Bitmap, x: cint, y: cint),
+  checkMaskCollision: function(bitmap1: *Bitmap, x1: cint, y1: cint, flip1: Flip, bitmap2: *Bitmap, x2: cint, y2: cint, flip2: Flip, rect: LCDRect): cint,
+
+  -- 1.1
+  setScreenClipRect: function(x: cint, y: cint, width: cint, height: cint),
+
+  -- 1.1.1
+  fillPolygon: function(nPoints: cint, coords: *cint, color: ColorOrPattern, fillrule: PolygonFillRule),
+  getFontHeight: function(font: *Font): uint8,
+
+  -- 1.7
+  getDisplayBufferBitmap: function(): *Bitmap,
+  drawRotatedBitmap: function(bitmap: *Bitmap, x: cint, y: cint, rotation: float32, centerx: float32, centery: float32, xscale: float32, yscale: float32),
+  setTextLeading: function(lineHeightAdustment: cint),
+
+  -- 1.8
+  setBitmapMask: function(bitmap: *Bitmap, mask: *Bitmap): cint,
+  getBitmapMask: function(bitmap: *Bitmap): *Bitmap,
+
+  -- 1.10
+  setStencilImage: function(stencil: *Bitmap, tile: cint),
+
+  -- 1.12
+  makeFontFromData: function(data: *FontData, wide: cint): *Font,
+
+  -- 2.1
+  getTextTracking: function(): cint,
+
+  -- 2.5
+  setPixel: function(x: cint, y: cint, c: ColorOrPattern),
+  getBitmapPixel: function(bitmap: *Bitmap, x: cint, y: cint): Color,
+  getBitmapTableInfo: function(table: *BitmapTable, count: *cint, width: *cint),
+
+  -- 2.6
+  drawTextInRect: function(text: pointer, len: csize, encoding: StringEncoding, x: cint, y: cint, width: cint, height: cint, wrap: TextWrappingMode, align: TextAlignment),
+
+  -- 2.7
+  getTextHeightForMaxWidth: function(font: *Font, text: pointer, len: csize, maxwidth: cint, encoding: StringEncoding, wrap: TextWrappingMode, tracking: cint, extraLeading: cint): cint,
+  drawRoundRect: function(x: cint, y: cint, width: cint, height: cint, radius: cint, lineWidth: cint, color: ColorOrPattern),
+  fillRoundRect: function(x: cint, y: cint, width: cint, height: cint, radius: cint, color: ColorOrPattern),
+
+  -- 3.0
+  tilemap: *PlaydateTilemap,
+  videostream: *PlaydateVideoStream,
 }
