@@ -1,3 +1,4 @@
+--[[ enums ]]
 global SpriteCollisionResponseType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
   UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
 }
@@ -5,10 +6,12 @@ global SpriteCollisionResponseType.Slide: SpriteCollisionResponseType <cimport "
 global SpriteCollisionResponseType.Freeze: SpriteCollisionResponseType <cimport "kCollisionTypeFreeze", nodecl, cinclude "pd_api.h">
 global SpriteCollisionResponseType.Overlap: SpriteCollisionResponseType <cimport "kCollisionTypeOverlap", nodecl, cinclude "pd_api.h">
 
+--[[ opaque types ]]
 global LCDSprite: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 global CWCollisionInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 global CWItemInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
+--[[ structs ]]
 global PDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
   x: float32,
   y: float32,
@@ -48,11 +51,12 @@ global SpriteQueryInfo: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
   exitPoint: CollisionPoint, --  The coordinates of the second intersection between sprite and the line segment
 }
 
-
+--[[ type aliases ]]
 global LCDSpriteDrawFunction: type = @function(sprite: *LCDSprite, bounds: PDRect, drawrect: PDRect)
 global LCDSpriteUpdateFunction: type = @function(sprite: *LCDSprite)
 global LCDSpriteCollisionFilterProc: type = @function(sprite: *LCDSprite, other: *LCDSprite): SpriteCollisionResponseType
 
+--[[ sprite API ]]
 global PlaydateSprite: type <cimport "playdate_sprite", nodecl, cinclude "pd_api.h"> = @record {
   setAlwaysRedraw: function(flag: cint),
   addDirtyRect: function(dirtyRect: LCDRect),

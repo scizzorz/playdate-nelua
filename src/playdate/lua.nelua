@@ -1,21 +1,18 @@
-
+--[[ type aliases ]]
 global LuaState: type = @pointer
 global LuaCFunction: type = @function(state: *LuaState): cint
 
+--[[ opaque types ]]
 global LuaUDObject: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 global LCDSprite: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
+--[[ enums ]]
 global LuaValueType: type <cimport "l_valtype", nodecl, cinclude "pd_api.h"> = @enum {
   UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
 }
 global LuaValueType.Int: LuaValueType <cimport "kInt", nodecl, cinclude "pd_api.h">
 global LuaValueType.Float: LuaValueType <cimport "kFloat", nodecl, cinclude "pd_api.h">
 global LuaValueType.Str: LuaValueType <cimport "kStr", nodecl, cinclude "pd_api.h">
-
-global LuaRegistration: type <cimport "lua_reg", nodecl, cinclude "pd_api.h"> = @record {
-  name: cstring,
-  func: LuaCFunction,
-}
 
 global LuaType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
   UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
@@ -30,6 +27,7 @@ global LuaType.Function: LuaType <cimport "kTypeFunction", nodecl, cinclude "pd_
 global LuaType.Thread: LuaType <cimport "kTypeThread", nodecl, cinclude "pd_api.h">
 global LuaType.Object: LuaType <cimport "kTypeObject", nodecl, cinclude "pd_api.h">
 
+--[[ structs ]]
 global LuaValueUnion: type = @union {
   intval: cuint,
   floatval: float32,
@@ -42,6 +40,12 @@ global LuaValue: type <cimport "lua_val", nodecl, cinclude "pd_api.h"> = @record
   v: LuaValueUnion,
 }
 
+global LuaRegistration: type <cimport "lua_reg", nodecl, cinclude "pd_api.h"> = @record {
+  name: cstring,
+  func: LuaCFunction,
+}
+
+--[[ Lua API ]]
 global PlaydateLua: type <cimport "playdate_lua", nodecl, cinclude "pd_api.h"> = @record {
   -- these two return 1 on success, else 0 with an error message in outErr
   addFunction: function(f: LuaCFunction, name: cstring, outErr: *cstring): cint,

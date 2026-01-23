@@ -81,15 +81,6 @@ global TextAlignment.Left: TextAlignment <cimport "kAlignTextLeft", nodecl, cinc
 global TextAlignment.Center: TextAlignment <cimport "kAlignTextCenter", nodecl, cinclude "pd_api.h">
 global TextAlignment.Right: TextAlignment <cimport "kAlignTextRight", nodecl, cinclude "pd_api.h">
 
---[[ structs ]]
--- LCDRect
-global LCDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
-  left: cint,
-  right: cint, -- not inclusive
-  top: cint,
-  bottom: cint, -- not inclusive
-}
-
 --[[ type aliases ]]
 global Pattern: type = @[16]uint8
 global ColorOrPattern: type = @usize
@@ -107,6 +98,15 @@ global LCDStreamPlayer: type <cimport "LCDStreamPlayer", ctypedef, cinclude "pd_
 global LCDTileMap: type <cimport "LCDTileMap", ctypedef, cinclude "pd_api.h"> = @record {}
 global LCDVideoPlayer: type <cimport "LCDVideoPlayer", ctypedef, cinclude "pd_api.h"> = @record {}
 global TCPConnection: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+--[[ structs ]]
+-- LCDRect
+global LCDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  left: cint,
+  right: cint, -- not inclusive
+  top: cint,
+  bottom: cint, -- not inclusive
+}
 
 --[[ graphics API ]]
 -- playdate_video

@@ -1,3 +1,4 @@
+--[[ display API ]]
 global PlaydateDisplay: type <cimport "playdate_display", nodecl, cinclude "pd_api.h"> = @record {
   getWidth: function(): cint,
   getHeight: function(): cint,

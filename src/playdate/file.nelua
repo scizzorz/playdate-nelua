@@ -1,3 +1,4 @@
+--[[ enums ]]
 global File: type <cimport "SDFile", ctypedef, cinclude "pd_api.h"> = @record {}
 
 global FileOptions: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
@@ -7,13 +8,7 @@ global FileOptions.Read: FileOptions <cimport "kFileRead", nodecl, cinclude "pd_
 global FileOptions.ReadData: FileOptions <cimport "kFileReadData", nodecl, cinclude "pd_api.h">
 global FileOptions.Write: FileOptions <cimport "kFileWrite", nodecl, cinclude "pd_api.h">
 
-global LCDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
-  left: cint,
-  right: cint, -- not inclusive
-  top: cint,
-  bottom: cint, -- not inclusive
-}
-
+--[[ structs ]]
 global FileStat: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
   isdir: cint,
   size: cuint,
@@ -25,10 +20,12 @@ global FileStat: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
   m_second: cint,
 }
 
+-- [[ consts ]]
 global SEEK_SET <const> = 0
 global SEEK_CUR <const> = 1
 global SEEK_END <const> = 2
 
+--[[ file API ]]
 global PlaydateFile: type <cimport "playdate_file", nodecl, cinclude "pd_api.h"> = @record {
   geterr: function(): cstring,
 

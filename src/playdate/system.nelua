@@ -1,8 +1,4 @@
--- All of the cinclude's in this specify "pd_api.h" rather than the more
--- appropriate sub-header because I was running into an error with the
--- subheaders. I don't think it matters in the end, either way, but the error
--- was likely to do with my C header path being wacked out.
-
+--[[ enums ]]
 -- PDButtons
 global Buttons: type <cimport "PDButtons", nodecl, cinclude "pd_api.h"> = @enum {
   UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
@@ -33,6 +29,15 @@ global AccessReply.Ask: AccessReply <cimport "kAccessAsk", nodecl, cinclude "pd_
 global AccessReply.Deny: AccessReply <cimport "kAccessDeny", nodecl, cinclude "pd_api.h">
 global AccessReply.AccessAllow: AccessReply <cimport "kAccessAllow", nodecl, cinclude "pd_api.h">
 
+-- PDPeripherals
+global Peripherals: type <cimport "PDPeripherals", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global Peripherals.None: integer <cimport "kNone", nodecl, cinclude "pd_api.h">
+global Peripherals.Accelerometer: integer <cimport "kAccelerometer", nodecl, cinclude "pd_api.h">
+global Peripherals.AllPeriperals: integer <cimport "kAllPeripherals", nodecl, cinclude "pd_api.h">
+
+--[[ structs ]]
 global DateTime: type <cimport "PDDateTime", ctypedef, cinclude "pd_api.h"> = @record {
   year: uint16,
   month: uint8,
@@ -43,26 +48,18 @@ global DateTime: type <cimport "PDDateTime", ctypedef, cinclude "pd_api.h"> = @r
   second: uint8,
 }
 
--- FIXME PDMenuItem?
-
--- PDPeripherals
-global Peripherals: type <cimport "PDPeripherals", nodecl, cinclude "pd_api.h"> = @enum {
-  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
-}
-global Peripherals.None: integer <cimport "kNone", nodecl, cinclude "pd_api.h">
-global Peripherals.Accelerometer: integer <cimport "kAccelerometer", nodecl, cinclude "pd_api.h">
-global Peripherals.AllPeriperals: integer <cimport "kAllPeripherals", nodecl, cinclude "pd_api.h">
-
--- Callback function types
-global CallbackFunction: type = @function(userdata: pointer): void
-global MenuItemCallbackFunction: type = @function(userdata: pointer): void
-global ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
-
 -- PDInfo
 global PDInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {
   osversion: uint32,
   language: integer,
 }
+
+-- FIXME PDMenuItem?
+
+--[[ type aliases ]]
+global CallbackFunction: type = @function(userdata: pointer): void
+global MenuItemCallbackFunction: type = @function(userdata: pointer): void
+global ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
 
 global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.h"> = @record {
   realloc: function(ptr: pointer, size: csize): pointer, -- ptr = NULL -> malloc, size = 0 -> free
