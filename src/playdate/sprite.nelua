@@ -1,0 +1,147 @@
+global SpriteCollisionResponseType: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global SpriteCollisionResponseType.Slide: SpriteCollisionResponseType <cimport "kCollisionTypeSlide", nodecl, cinclude "pd_api.h">
+global SpriteCollisionResponseType.Freeze: SpriteCollisionResponseType <cimport "kCollisionTypeFreeze", nodecl, cinclude "pd_api.h">
+global SpriteCollisionResponseType.Overlap: SpriteCollisionResponseType <cimport "kCollisionTypeOverlap", nodecl, cinclude "pd_api.h">
+
+global LCDSprite: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global CWCollisionInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global CWItemInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+global PDRect: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  x: float32,
+  y: float32,
+  width: float32,
+  height: float32,
+}
+
+global CollisionPoint: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  x: float32,
+  y: float32,
+}
+
+global CollisionVector: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  x: cint,
+  y: cint,
+}
+
+global SpriteCollisionInfo: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  sprite: *LCDSprite, --  The sprite being moved
+  other: *LCDSprite, --  The sprite colliding with the sprite being moved
+  responseType: SpriteCollisionResponseType, --  The result of collisionResponse
+  overlaps: uint8, --  True if the sprite was overlapping other when the collision started. False if it didn’t overlap but tunneled through other.
+  ti: float32, --  A number between 0 and 1 indicating how far along the movement to the goal the collision occurred
+  move: CollisionPoint, --  The difference between the original coordinates and the actual ones when the collision happened
+  normal: CollisionVector, --  The collision normal; usually -1, 0, or 1 in x and y. Use this value to determine things like if your character is touching the ground.
+  touch: CollisionPoint, --  The coordinates where the sprite started touching other
+  spriteRect: PDRect, --  The rectangle the sprite occupied when the touch happened
+  otherRect: PDRect, --  The rectangle the sprite being collided with occupied when the touch happened
+}
+
+global SpriteQueryInfo: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  sprite: *LCDSprite, --  The sprite being intersected by the segment
+  --  ti1 and ti2 are numbers between 0 and 1 which indicate how far from the starting point of the line segment the collision happened
+  ti1: float32, --  entry point
+  ti2: float32, --  exit point
+  entryPoint: CollisionPoint, --  The coordinates of the first intersection between sprite and the line segment
+  exitPoint: CollisionPoint, --  The coordinates of the second intersection between sprite and the line segment
+}
+
+
+global LCDSpriteDrawFunction: type = @function(sprite: *LCDSprite, bounds: PDRect, drawrect: PDRect)
+global LCDSpriteUpdateFunction: type = @function(sprite: *LCDSprite)
+global LCDSpriteCollisionFilterProc: type = @function(sprite: *LCDSprite, other: *LCDSprite): SpriteCollisionResponseType
+
+global PlaydateSprite: type <cimport "playdate_sprite", nodecl, cinclude "pd_api.h"> = @record {
+  setAlwaysRedraw: function(flag: cint),
+  addDirtyRect: function(dirtyRect: LCDRect),
+  drawSprites: function(),
+  updateAndDrawSprites: function(),
+
+  newSprite: function(): *LCDSprite,
+  freeSprite: function(sprite: *LCDSprite),
+  copy: function(sprite: *LCDSprite): *LCDSprite,
+
+  addSprite: function(sprite: *LCDSprite),
+  removeSprite: function(sprite: *LCDSprite),
+  removeSprites: function(sprites: **LCDSprite, count: cint),
+  removeAllSprites: function(),
+  getSpriteCount: function(): cint,
+
+  setBounds: function(sprite: *LCDSprite, bounds: PDRect),
+  getBounds: function(sprite: *LCDSprite): PDRect,
+  moveTo: function(sprite: *LCDSprite, x: float32, y: float32),
+  moveBy: function(sprite: *LCDSprite, dx: float32, dy: float32),
+
+  setImage: function(sprite: *LCDSprite, image: *Bitmap, flip: Flip),
+  getImage: function(sprite: *LCDSprite): *Bitmap,
+  setSize: function(s: *LCDSprite, width: float32, height: float32),
+  setZIndex: function(sprite: *LCDSprite, zIndex: int16),
+  getZIndex: function(sprite: *LCDSprite): int16,
+
+  setDrawMode: function(sprite: *LCDSprite, mode: DrawMode),
+  setImageFlip: function(sprite: *LCDSprite, flip: Flip),
+  getImageFlip: function(sprite: *LCDSprite): Flip,
+  setStencil: function(sprite: *LCDSprite, stencil: *Bitmap), -- deprecated in favor of setStencilImage()
+
+  setClipRect: function(sprite: *LCDSprite, clipRect: LCDRect),
+  clearClipRect: function(sprite: *LCDSprite),
+  setClipRectsInRange: function(clipRect: LCDRect, startZ: cint, endZ: cint),
+  clearClipRectsInRange: function(startZ: cint, endZ: cint),
+
+  setUpdatesEnabled: function(sprite: *LCDSprite, flag: cint),
+  updatesEnabled: function(sprite: *LCDSprite): cint,
+  setCollisionsEnabled: function(sprite: *LCDSprite, flag: cint),
+  collisionsEnabled: function(sprite: *LCDSprite): cint,
+  setVisible: function(sprite: *LCDSprite, flag: cint),
+  isVisible: function(sprite: *LCDSprite): cint,
+  setOpaque: function(sprite: *LCDSprite, flag: cint),
+  markDirty: function(sprite: *LCDSprite),
+
+  setTag: function(sprite: *LCDSprite, tag: uint8),
+  getTag: function(sprite: *LCDSprite): uint8,
+
+  setIgnoresDrawOffset: function(sprite: *LCDSprite, flag: cint),
+
+  setUpdateFunction: function(sprite: *LCDSprite, func: *LCDSpriteUpdateFunction),
+  setDrawFunction: function(sprite: *LCDSprite, func: *LCDSpriteDrawFunction),
+
+  getPosition: function(sprite: *LCDSprite, x: *float32, y: *float32),
+
+  -- Collisions
+  resetCollisionWorld: function(),
+
+  setCollideRect: function(sprite: *LCDSprite, collideRect: PDRect),
+  getCollideRect: function(sprite: *LCDSprite): PDRect,
+  clearCollideRect: function(sprite: *LCDSprite),
+
+  -- caller is responsible for freeing the returned array for all collision methods
+  setCollisionResponseFunction: function(sprite: *LCDSprite, func: *LCDSpriteCollisionFilterProc),
+  checkCollisions: function(sprite: *LCDSprite, goalX: float32, goalY: float32, actualX: *float32, actualY: *float32, len: *cint): *SpriteCollisionInfo, -- access results using SpriteCollisionInfo *info = &results[i];
+  moveWithCollisions: function(sprite: *LCDSprite, goalX: float32, goalY: float32, actualX: *float32, actualY: *float32, len: *cint): *SpriteCollisionInfo,
+  querySpritesAtPoint: function(x: float32, y: float32, len: *cint): **LCDSprite,
+  querySpritesInRect: function(x: float32, y: float32, width: float32, height: float32, len: *cint): **LCDSprite,
+  querySpritesAlongLine: function(x1: float32, y1: float32, x2: float32, y2: float32, len: *cint): **LCDSprite,
+  querySpriteInfoAlongLine: function(x1: float32, y1: float32, x2: float32, y2: float32, len: *cint): *SpriteQueryInfo, -- access results using SpriteQueryInfo *info = &results[i];
+  overlappingSprites: function(sprite: *LCDSprite, len: *cint): **LCDSprite,
+  allOverlappingSprites: function(len: *cint): **LCDSprite,
+
+  -- added in 1.7
+  setStencilPattern: function(sprite: *LCDSprite, pattern: [8]uint8),
+  clearStencil: function(sprite: *LCDSprite),
+
+  setUserdata: function(sprite: *LCDSprite, userdata: pointer),
+  getUserdata: function(sprite: *LCDSprite): pointer,
+
+  -- added in 1.10
+  setStencilImage: function(sprite: *LCDSprite, stencil: *Bitmap, tile: cint),
+
+  -- 2.1
+  setCenter: function(s: *LCDSprite, x: float32, y: float32),
+  getCenter: function(s: *LCDSprite, x: *float32, y: *float32),
+
+  -- 2.7
+  setTilemap: function(s: *LCDSprite, tilemap: *TileMap),
+  getTilemap: function(s: *LCDSprite): *TileMap,
+}

@@ -1,0 +1,16 @@
+global PlaydateDisplay: type <cimport "playdate_display", nodecl, cinclude "pd_api.h"> = @record {
+  getWidth: function(): cint,
+  getHeight: function(): cint,
+
+  setRefreshRate: function(rate: float32),
+
+  setInverted: function(flag: cint),
+  setScale: function(s: cuint),
+  setMosaic: function(x: cuint, y: cuint),
+  setFlipped: function(x: cint, y: cint),
+  setOffset: function(x: cint, y: cint),
+
+  -- 2.7
+  getRefreshRate: function(): float32,
+  getFPS: function(): float32,
+}
