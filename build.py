@@ -39,9 +39,14 @@ sdk_dir = Path(get_sdk_path())
 c_api_dir = sdk_dir / "C_API"
 support_dir = c_api_dir / "buildsupport"
 
+main_nelua = src_dir / "main.nelua"
+
 dev_main_c = build_dir / "dev_main.c"
 sim_main_c = build_dir / "sim_main.c"
 setup_c = support_dir / "setup.c"
+
+dylib = build_dir / "pdex.dylib"
+elf = build_dir / "pdex.elf"
 
 sim_defs = [
     "TARGET_SIMULATOR",
@@ -72,14 +77,17 @@ dylib_flags = [
     "-dynamiclib",  # undocumented
     "-rdynamic",  # undocumented
 ]
-dylib_ext = "dylib"
-dylib = build_dir / ("pdex." + dylib_ext)
 
 pdc = which("pdc")
 
 dev_prefix = "arm-none-eabi-"
 dev_cc_flags = [
     "-g3",  # not sure, possibly related to -g
+    "-mthumb",
+    "-mcpu=cortex-m7",
+    "-mfloat-abi=hard",
+    "-mfpu=fpv5-sp-d16",
+    "-D__FPU_USED=1",
 ]
 
 dev_cc = which(dev_prefix + "gcc")
@@ -93,14 +101,6 @@ dev_hex = [dev_objcopy, "-O", "hex"]
 build_dir.mkdir(exist_ok=True)
 bundle_dir.mkdir(exist_ok=True)
 dep_dir.mkdir(exist_ok=True)
-
-dev_flags = [
-    "-mthumb",
-    "-mcpu=cortex-m7",
-    "-mfloat-abi=hard",
-    "-mfpu=fpv5-sp-d16",
-    "-D__FPU_USED=1",
-]
 
 cp_flags = [
     "-O2",
@@ -126,89 +126,78 @@ ld_flags = [
     "-Wl,-Map=build/pdex.map,--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
 ]
 
-print(set(cp_flags) & set(ld_flags))
-
 sim_def_flags = [f"-D{flag}=1" for flag in sim_defs]
 dev_def_flags = [f"-D{flag}=1" for flag in dev_defs]
 include_flags = [flag for path in include_dirs for flag in ("-I", path)]
 
+
+def transpile_nelua(cc, output):
+    run([nelua, "--cc", cc, "--code", main_nelua, "--output", output])
+
+
+def compile_for_device(source_files):
+    obj_files = []
+    for source_file in source_files:
+        assembly_list = build_dir / source_file.with_suffix(".lst").name
+        dep_file = dep_dir / source_file.with_suffix(".d").name
+        obj_file = build_dir / source_file.with_suffix(".o").name
+        run(
+            [dev_cc]
+            + dev_cc_flags
+            + cp_flags
+            + dev_def_flags
+            + include_flags
+            + [
+                f"-Wa,-ahlms={assembly_list}",
+                "-MD",
+                "-MP",
+                "-MF",
+                dep_file,
+                "-c",
+                source_file,
+                "-o",
+                obj_file,
+            ]
+        )
+        obj_files.append(obj_file)
+
+    return obj_files
+
+
+def link_for_device(obj_files):
+    run([dev_cc] + dev_cc_flags + ld_flags + obj_files + ["-o", elf])
+
+
+def compile_for_simulator(source_files):
+    run(
+        [sim_cc]
+        + sim_cc_flags
+        + dylib_flags
+        + sim_def_flags
+        + include_flags
+        + source_files
+        + ["-o", dylib]
+    )
+
+
 # transpile main.c for device
-run(
-    [nelua] + ["--cc", dev_cc] + ["--code", "src/main.nelua"] + ["--output", dev_main_c]
-)
+transpile_nelua(dev_cc, dev_main_c)
 
 # transpile main.c for simulator
-run(
-    [nelua] + ["--cc", sim_cc] + ["--code", "src/main.nelua"] + ["--output", sim_main_c]
-)
+transpile_nelua(sim_cc, sim_main_c)
 
 # compile main.o for device
-run(
-    [dev_cc]
-    + dev_cc_flags
-    + [
-        "-c",
-    ]
-    + dev_flags
-    + cp_flags
-    + [
-        "-Wa,-ahlms=build/main.lst",
-    ]
-    + dev_def_flags
-    + [
-        "-MD",
-        "-MP",
-        "-MF",
-        "build/dep/main.o.d",
-    ]
-    + include_flags
-    + [dev_main_c, "-o", "build/main.o"]
-)
-
-# compile setup.o for device
-run(
-    [dev_cc]
-    + dev_cc_flags
-    + [
-        "-c",
-    ]
-    + dev_flags
-    + cp_flags
-    + [
-        "-Wa,-ahlms=build/setup.lst",
-    ]
-    + dev_def_flags
-    + [
-        "-MD",
-        "-MP",
-        "-MF",
-        "build/dep/setup.o.d",
-    ]
-    + include_flags
-    + [setup_c, "-o", "build/setup.o"]
-)
+obj_files = compile_for_device([dev_main_c, setup_c])
 
 # link for device
-run(
-    [dev_cc]
-    + ["build/main.o", "build/setup.o"]
-    + dev_flags
-    + ld_flags
-    + ["-o", "build/pdex.elf"]
-)
+link_for_device(obj_files)
 
 # compile for simulator
-run(
-    [sim_cc]
-    + sim_cc_flags
-    + dylib_flags
-    + sim_def_flags
-    + include_flags
-    + ["-o", dylib]
-    + [sim_main_c, setup_c]
-)
+compile_for_simulator([sim_main_c, setup_c])
 
-run(["cp", "-rf", "build/pdex.elf", dylib, bundle_dir])
+# populate bundle
+run(["cp", "-rf", elf, dylib, bundle_dir])
 run(["cp", "-rf"] + list(assets_dir.iterdir()) + [bundle_dir])
 
+# build PDX
 run([pdc, bundle_dir, pdx])
