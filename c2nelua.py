@@ -43,6 +43,16 @@ type_rename_map = {
     "lua_reg": "LuaRegistration",
     "enumLuaType": "LuaType",
     "lua_val": "LuaValue",
+
+    "json_reader": "JSONReader",
+    "json_value_type": "JSONValueType",
+    "json_value": "JSONValue",
+    "json_decoder": "JSONDecoder",
+    "json_encoder": "JSONEncoder",
+    "json_readFunc": "JSONReadFunc",
+    "json_writeFunc": "JSONWriteFunc",
+    "structjson_encoder": "JSONEncoder",
+    "structjson_decoder": "JSONDecoder",
 }
 
 const_rename_map = {

@@ -1,0 +1,92 @@
+--[[ enums ]]
+global JSONValueType: type <cimport "json_value_type", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global JSONValueType.Null: JSONValueType <cimport "kJSONNull", nodecl, cinclude "pd_api.h">
+global JSONValueType.True: JSONValueType <cimport "kJSONTrue", nodecl, cinclude "pd_api.h">
+global JSONValueType.False: JSONValueType <cimport "kJSONFalse", nodecl, cinclude "pd_api.h">
+global JSONValueType.Integer: JSONValueType <cimport "kJSONInteger", nodecl, cinclude "pd_api.h">
+global JSONValueType.Float: JSONValueType <cimport "kJSONFloat", nodecl, cinclude "pd_api.h">
+global JSONValueType.String: JSONValueType <cimport "kJSONString", nodecl, cinclude "pd_api.h">
+global JSONValueType.Array: JSONValueType <cimport "kJSONArray", nodecl, cinclude "pd_api.h">
+
+--[[ structs ]]
+global JSONValueUnion: type = @union {
+  intval: cint,
+  floatval: float32,
+  stringval: cstring,
+  arrayval: pointer,
+  tableval: pointer,
+}
+
+global JSONValue: type <cimport "json_value", nodecl, cinclude "pd_api.h"> = @record {
+  type: uint8,
+  data: JSONValueUnion,
+}
+
+-- FIXME: static inline int json_intValue(json_value value);
+-- FIXME: static inline float json_floatValue(json_value value);
+-- FIXME: static inline int json_boolValue(json_value value);
+-- FIXME: static inline char* json_stringValue(json_value value);
+
+-- decoder
+global JSONDecoder: type <cimport "json_decoder", ctypedef, cinclude "pd_api.h"> = @record {
+  userdata: pointer,
+  returnString: cint, -- when set, the decoder skips parsing and returns the current subtree as a string
+  path: cstring, -- updated during parsing, reflects current position in tree
+
+  decodeError: function(decoder: *JSONDecoder, error: cstring, linenum: cint),
+
+  -- the following functions are each optional
+  willDecodeSublist: function(decoder: *JSONDecoder, name: cstring, type: JSONValueType),
+  shouldDecodeTableValueForKey: function(decoder: *JSONDecoder, key: cstring): cint,
+  didDecodeTableValue: function(decoder: *JSONDecoder, key: cstring, value: JSONValue),
+  shouldDecodeArrayValueAtIndex: function(decoder: *JSONDecoder, pos: cint): cint,
+  didDecodeArrayValue: function(decoder: *JSONDecoder, pos: cint, value: JSONValue), -- if pos==0, this was a bare value at the root of the file
+  didDecodeSublist: function(decoder: *JSONDecoder, name: cstring, type: JSONValueType): pointer,
+}
+
+-- convenience functions for setting up a table-only or array-only decoder
+-- FIXME: static inline void json_setTableDecode(json_decoder* decoder, ...);
+-- FIXME: static inline void json_setArrayDecode(json_decoder* decoder, ...);
+
+-- fill buffer, return bytes written or -1 on end of data
+global JSONReadFunc: type = @function(userdata: pointer, buf: *uint8, bufsize: cint): cint
+
+global JSONReader: type <cimport "json_reader", nodecl, cinclude "pd_api.h"> = @record {
+  read: JSONReadFunc,
+  userdata: pointer, --  passed back to the read function above
+}
+
+-- encoder
+global JSONWriteFunc: type = @function(userdata: pointer, str: cstring, len: cint)
+
+global JSONEncoder: type <cimport "json_encoder", nodecl, cinclude "pd_api.h"> = @record {
+  writeStringFunc: JSONWriteFunc,
+  userdata: pointer,
+
+  --int pretty : 1;
+  --int startedTable : 1;
+  --int startedArray : 1;
+  --int depth : 29;
+
+  startArray: function(encoder: *JSONEncoder),
+  addArrayMember: function(encoder: *JSONEncoder),
+  endArray: function(encoder: *JSONEncoder),
+  startTable: function(encoder: *JSONEncoder),
+  addTableMember: function(encoder: *JSONEncoder, name: cstring, len: cint),
+  endTable: function(encoder: *JSONEncoder),
+  writeNull: function(encoder: *JSONEncoder),
+  writeFalse: function(encoder: *JSONEncoder),
+  writeTrue: function(encoder: *JSONEncoder),
+  writeInt: function(encoder: *JSONEncoder, num: cint),
+  writeDouble: function(encoder: *JSONEncoder, num: float64),
+  writeString: function(encoder: *JSONEncoder, str: cstring, len: cint),
+}
+
+global PlaydateJSON: type <cimport "playdate_json", nodecl, cinclude "pd_api.h"> = @record {
+  initEncoder: function(encoder: *JSONEncoder, write: JSONWriteFunc, userdata: pointer, pretty: cint),
+
+  decode: function(functions: *JSONDecoder, reader: JSONReader, outval: *JSONValue): cint,
+  decodeString: function(functions: *JSONDecoder, jsonString: cstring, outval: *JSONValue): cint,
+}

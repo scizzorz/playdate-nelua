@@ -1,6 +1,7 @@
 require("./display.nelua")
 require("./file.nelua")
 require("./graphics.nelua")
+require("./json.nelua")
 require("./lua.nelua")
 require("./network.nelua")
 require("./scoreboards.nelua")
@@ -35,5 +36,5 @@ global PlaydateAPI: type <cimport, cinclude "pd_api.h", ctypedef> = @record {
   lua: *PlaydateLua,
   scoreboards: *PlaydateScoreboards,
   network: *PlaydateNetwork,
-  -- json: *PlaydateJson,
+  json: *PlaydateJSON,
 }
