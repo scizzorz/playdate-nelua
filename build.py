@@ -91,6 +91,17 @@ dylib_flags = [
 ]
 
 pdc = require("pdc")
+pdc_flags = []
+
+sysname = os.uname().sysname
+if sysname == "Linux":
+    sim_cc = "gcc"
+    dylib = build_dir / "pdex.so"
+    dylib_flags = [
+        "-shared",
+        "-fPIC",
+    ]
+    pdc_flags = ["-sdkpath", sdk_dir]
 
 dev_prefix = "arm-none-eabi-"
 dev_cc_flags = [
@@ -229,5 +240,5 @@ cp_to_bundle(list(assets_dir.iterdir()))
 # build PDX
 run(
     f"Bundling {YELLOW}{bundle_dir.relative_to(cwd)}{RESET} {WHITE}=> {YELLOW}{pdx}{RESET}",
-    [pdc, bundle_dir, pdx],
+    [pdc] + pdc_flags + [bundle_dir, pdx],
 )
