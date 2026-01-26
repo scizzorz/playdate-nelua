@@ -1,0 +1,112 @@
+--[[ opaque types ]]
+global HTTPConnection: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+global TCPConnection: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
+
+--[[ enums ]]
+global PDNetErr: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global PDNetErr.Ok: PDNetErr <cimport "NET_OK", nodecl, cinclude "pd_api.h">
+global PDNetErr.NoDevice: PDNetErr <cimport "NET_NO_DEVICE", nodecl, cinclude "pd_api.h">
+global PDNetErr.Busy: PDNetErr <cimport "NET_BUSY", nodecl, cinclude "pd_api.h">
+global PDNetErr.WriteError: PDNetErr <cimport "NET_WRITE_ERROR", nodecl, cinclude "pd_api.h">
+global PDNetErr.WriteBusy: PDNetErr <cimport "NET_WRITE_BUSY", nodecl, cinclude "pd_api.h">
+global PDNetErr.WriteTimeout: PDNetErr <cimport "NET_WRITE_TIMEOUT", nodecl, cinclude "pd_api.h">
+global PDNetErr.ReadError: PDNetErr <cimport "NET_READ_ERROR", nodecl, cinclude "pd_api.h">
+global PDNetErr.ReadBusy: PDNetErr <cimport "NET_READ_BUSY", nodecl, cinclude "pd_api.h">
+global PDNetErr.ReadTimeout: PDNetErr <cimport "NET_READ_TIMEOUT", nodecl, cinclude "pd_api.h">
+global PDNetErr.ReadOverflow: PDNetErr <cimport "NET_READ_OVERFLOW", nodecl, cinclude "pd_api.h">
+global PDNetErr.FrameError: PDNetErr <cimport "NET_FRAME_ERROR", nodecl, cinclude "pd_api.h">
+global PDNetErr.BadResponse: PDNetErr <cimport "NET_BAD_RESPONSE", nodecl, cinclude "pd_api.h">
+global PDNetErr.ErrorResponse: PDNetErr <cimport "NET_ERROR_RESPONSE", nodecl, cinclude "pd_api.h">
+global PDNetErr.ResetTimeout: PDNetErr <cimport "NET_RESET_TIMEOUT", nodecl, cinclude "pd_api.h">
+global PDNetErr.BufferTooSmall: PDNetErr <cimport "NET_BUFFER_TOO_SMALL", nodecl, cinclude "pd_api.h">
+global PDNetErr.UnexpectedResponse: PDNetErr <cimport "NET_UNEXPECTED_RESPONSE", nodecl, cinclude "pd_api.h">
+global PDNetErr.NotConnectedToAP: PDNetErr <cimport "NET_NOT_CONNECTED_TO_AP", nodecl, cinclude "pd_api.h">
+global PDNetErr.NotImplemented: PDNetErr <cimport "NET_NOT_IMPLEMENTED", nodecl, cinclude "pd_api.h">
+global PDNetErr.ConnectionClosed: PDNetErr <cimport "NET_NOT_IMPLEMENTED", nodecl, cinclude "pd_api.h">
+
+global WifiStatus: type <cimport, nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global WifiStatus.NotConnected: WifiStatus <cimport "kWifiNotConnected", nodecl, cinclude "pd_api.h">
+global WifiStatus.Connected: WifiStatus <cimport "kWifiConnected", nodecl, cinclude "pd_api.h">
+global WifiStatus.NotAvailable: WifiStatus <cimport "kWifiNotAvailable", nodecl, cinclude "pd_api.h">
+
+global AccessReply: type <cimport "accessReply", nodecl, cinclude "pd_api.h"> = @enum {
+  UNUSED = 0, -- Nelua doesn't allow an empty enum, but we inject the values below.
+}
+global AccessReply.Ask: AccessReply <cimport "kAccessAsk", nodecl, cinclude "pd_api.h">
+global AccessReply.Deny: AccessReply <cimport "kAccessDeny", nodecl, cinclude "pd_api.h">
+global AccessReply.AccessAllow: AccessReply <cimport "kAccessAllow", nodecl, cinclude "pd_api.h">
+
+global AccessRequestCallback: type = @function(allowed: boolean, userdata: pointer)
+global HTTPConnectionCallback: type = @function(connection: *HTTPConnection)
+global HTTPHeaderCallback: type = @function(conn: *HTTPConnection, key: cstring, value: cstring)
+
+global PlaydateHTTP: type <cimport "playdate_http", nodecl, cinclude "pd_api.h"> = @record {
+  requestAccess: function(server: cstring, port: cint, usessl: boolean, purpose: cstring, requestCallback: *AccessRequestCallback, userdata: pointer): AccessReply,
+
+  newConnection: function(server: cstring, port: cint, usessl: boolean): *HTTPConnection,
+  retain: function(http: *HTTPConnection): *HTTPConnection,
+  release: function(http: *HTTPConnection),
+
+  setConnectTimeout: function(connection: *HTTPConnection, ms: cint),
+  setKeepAlive: function(connection: *HTTPConnection, keepalive: boolean),
+  setByteRange: function(connection: *HTTPConnection, start: cint, end_: cint),
+  setUserdata: function(connection: *HTTPConnection, userdata: pointer),
+  getUserdata: function(connection: *HTTPConnection): pointer,
+
+  get: function(conn: *HTTPConnection, path: cstring, headers: cstring, headerlen: csize): PDNetErr,
+  post: function(conn: *HTTPConnection, path: cstring, headers: cstring, headerlen: csize, body: cstring, bodylen: csize): PDNetErr,
+  query: function(conn: *HTTPConnection, method: cstring, path: cstring, headers: cstring, headerlen: csize, body: cstring, bodylen: csize): PDNetErr,
+  getError: function(connection: *HTTPConnection): PDNetErr,
+  getProgress: function(conn: *HTTPConnection, read: *cint, total: *cint),
+  getResponseStatus: function(connection: *HTTPConnection): cint,
+  getBytesAvailable: function(conn: *HTTPConnection): csize,
+  setReadTimeout: function(conn: *HTTPConnection, ms: cint),
+  setReadBufferSize: function(conn: *HTTPConnection, bytes: cint),
+  read: function(conn: *HTTPConnection, buf: pointer, buflen: cuint): cint,
+  close: function(connection: *HTTPConnection),
+
+  setHeaderReceivedCallback: function(connection: *HTTPConnection, headercb: *HTTPHeaderCallback),
+  setHeadersReadCallback: function(connection: *HTTPConnection, callback: *HTTPConnectionCallback),
+  setResponseCallback: function(connection: *HTTPConnection, callback: *HTTPConnectionCallback),
+  setRequestCompleteCallback: function(connection: *HTTPConnection, callback: *HTTPConnectionCallback),
+  setConnectionClosedCallback: function(connection: *HTTPConnection, callback: *HTTPConnectionCallback),
+}
+
+global TCPConnectionCallback: type = @function(connection: *TCPConnection, err: PDNetErr)
+global TCPOpenCallback: type = @function(conn: *TCPConnection, err: PDNetErr, ud: pointer)
+
+global PlaydateTCP: type <cimport "playdate_tcp", nodecl, cinclude "pd_api.h"> = @record {
+  requestAccess: function(server: cstring, port: cint, usessl: boolean, purpose: cstring, requestCallback: *AccessRequestCallback, userdata: pointer): AccessReply,
+  newConnection: function(server: cstring, port: cint, usessl: boolean): *TCPConnection,
+  retain: function(http: *TCPConnection): *TCPConnection,
+  release: function(http: *TCPConnection),
+  getError: function(connection: *TCPConnection): PDNetErr,
+
+  setConnectTimeout: function(connection: *TCPConnection, ms: cint),
+  setUserdata: function(connection: *TCPConnection, userdata: pointer),
+  getUserdata: function(connection: *TCPConnection): pointer,
+
+  open: function(conn: *TCPConnection, cb: TCPOpenCallback, ud: pointer): PDNetErr,
+  close: function(conn: *TCPConnection): PDNetErr,
+
+  setConnectionClosedCallback: function(conn: *TCPConnection, callback: *TCPConnectionCallback),
+
+  setReadTimeout: function(conn: *TCPConnection, ms: cint),
+  setReadBufferSize: function(conn: *TCPConnection, bytes: cint),
+  getBytesAvailable: function(conn: *TCPConnection): csize,
+
+  read: function(conn: *TCPConnection, buffer: pointer, length: csize): cint, -- returns # of bytes read, or PDNetErr on error
+  write: function(conn: *TCPConnection, buffer: pointer, length: csize): cint, -- returns # of bytes sent, or PDNetErr on error
+}
+
+global PlaydateNetwork: type <cimport "playdate_network", nodecl, cinclude "pd_api.h"> = @record {
+  http: *PlaydateHTTP,
+  tcp: *PlaydateTCP,
+
+  getStatus: function(): WifiStatus,
+  setEnabled: function(flag: boolean, callback: function(err: PDNetErr)),
+}

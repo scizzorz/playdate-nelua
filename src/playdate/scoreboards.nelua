@@ -1,0 +1,45 @@
+--[[ structs ]]
+global PDScore: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  rank: uint32,
+  value: uint32,
+  player: cstring,
+}
+
+global PDScoresList: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  boardID: cstring,
+  count: cuint,
+  lastUpdated: uint32,
+  playerIncluded: cint,
+  limit: cuint,
+  scores: *PDScore,
+}
+
+global PDBoard: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  boardID: cstring,
+  name: cstring,
+}
+
+global PDBoardsList: type <cimport, nodecl, cinclude "pd_api.h"> = @record {
+  count: cuint,
+  lastUpdated: uint32,
+  boards: *PDBoard,
+}
+
+--[[ type aliases ]]
+global AddScoreCallback: type = @function(score: *PDScore, errorMessage: cstring)
+global PersonalBestCallback: type = @function(score: *PDScore, errorMessage: cstring)
+global BoardsListCallback: type = @function(boards: *PDBoardsList, errorMessage: cstring)
+global ScoresCallback: type = @function(scores: *PDScoresList, errorMessage: cstring)
+
+--[[ scoreboard API ]]
+global PlaydateScoreboards: type <cimport "playdate_scoreboards", nodecl, cinclude "pd_api.h"> = @record {
+  addScore: function(boardId: cstring, value: uint32, callback: AddScoreCallback): cint,
+  getPersonalBest: function(boardId: cstring, callback: PersonalBestCallback): cint,
+  freeScore: function(score: *PDScore),
+
+  getScoreboards: function(callback: BoardsListCallback): cint,
+  freeBoardsList: function(boardsList: *PDBoardsList),
+
+  getScores: function(boardId: cstring, callback: ScoresCallback): cint,
+  freeScoresList: function(scoresList: *PDScoresList),
+}
