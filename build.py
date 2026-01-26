@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import os
 from shutil import which
+import os
 import subprocess
 
 WHITE = "\033[37m"
@@ -16,6 +16,7 @@ def run(message, args):
     print(message)
     print(f"{WHITE}$", *args, RESET)
     subprocess.run(args)
+
 
 def require(exe):
     path = which(exe)
@@ -53,9 +54,11 @@ main_nelua = src_dir / "main.nelua"
 dev_main_c = build_dir / "dev_main.c"
 sim_main_c = build_dir / "sim_main.c"
 setup_c = support_dir / "setup.c"
+linker_script = support_dir / "link_map.ld"
 
 dylib = build_dir / "pdex.dylib"
 elf = build_dir / "pdex.elf"
+
 
 sim_defs = [
     "TARGET_SIMULATOR",
@@ -131,7 +134,7 @@ cp_flags = [
 ld_flags = [
     "--specs=nosys.specs",
     "-nostartfiles",
-    "-T/Users/jweachock/Developer/PlaydateSDK/C_API/buildsupport/link_map.ld",
+    f"-T{linker_script}",
     "-Wl,-Map=build/pdex.map,--cref,--gc-sections,--no-warn-mismatch,--emit-relocs",
 ]
 
