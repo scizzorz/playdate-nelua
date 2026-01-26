@@ -17,6 +17,13 @@ def run(message, args):
     print(f"{WHITE}$", *args, RESET)
     subprocess.run(args)
 
+def require(exe):
+    path = which(exe)
+    if path is None:
+        raise Exception(f"Unable to locate executable for {exe}")
+
+    return Path(path)
+
 
 def get_sdk_path() -> str:
     if (from_env := os.getenv("PLAYDATE_SDK_PATH")) is not None:
@@ -67,9 +74,9 @@ include_dirs = [
 
 lib_dirs = []
 
-nelua = which("nelua")
+nelua = require("nelua")
 
-sim_cc = which("clang")  # FIXME gcc if linux
+sim_cc = require("clang")  # FIXME gcc if linux
 sim_cc_flags = [
     "-g",  # "Generate source-level debug information"
     "-lm",  # I think this links with the math lib?
@@ -80,7 +87,7 @@ dylib_flags = [
     "-rdynamic",  # undocumented
 ]
 
-pdc = which("pdc")
+pdc = require("pdc")
 
 dev_prefix = "arm-none-eabi-"
 dev_cc_flags = [
@@ -92,9 +99,9 @@ dev_cc_flags = [
     "-D__FPU_USED=1",
 ]
 
-dev_cc = which(dev_prefix + "gcc")
-dev_objcopy = which(dev_prefix + "objcopy")
-dev_strip = which(dev_prefix + "strip")
+dev_cc = require(dev_prefix + "gcc")
+dev_objcopy = require(dev_prefix + "objcopy")
+dev_strip = require(dev_prefix + "strip")
 
 dev_as = [dev_cc, "-x", "assembler-with-cpp"]
 dev_bin = [dev_objcopy, "-O", "binary"]
