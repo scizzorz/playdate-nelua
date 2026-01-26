@@ -4,15 +4,17 @@ import os
 from shutil import which
 import subprocess
 
-BLACK = "\033[37m"
+WHITE = "\033[37m"
+BLACK = "\033[30m"
 GREEN = "\033[32m"
 RED = "\033[31m"
 RESET = "\033[0m"
 YELLOW = "\033[33m"
 
 
-def run(args):
-    print(f"{GREEN}$", f"{YELLOW}{args[0]}{BLACK}", *args[1:], RESET)
+def run(message, args):
+    print(message)
+    print(f"{WHITE}$", *args, RESET)
     subprocess.run(args)
 
 
@@ -131,8 +133,11 @@ dev_def_flags = [f"-D{flag}=1" for flag in dev_defs]
 include_flags = [flag for path in include_dirs for flag in ("-I", path)]
 
 
-def transpile_nelua(cc, output):
-    run([nelua, "--cc", cc, "--code", main_nelua, "--output", output])
+def transpile_nelua(cc, source_file, output):
+    run(
+        f"Transpiling {YELLOW}{source_file.name} {WHITE}=> {YELLOW}{output.relative_to(cwd)}{RESET}",
+        [nelua, "--cc", cc, "--code", source_file, "--output", output],
+    )
 
 
 def compile_for_device(source_files):
@@ -142,6 +147,7 @@ def compile_for_device(source_files):
         dep_file = dep_dir / source_file.with_suffix(".d").name
         obj_file = build_dir / source_file.with_suffix(".o").name
         run(
+            f"Compiling {YELLOW}{source_file.name} {WHITE}=> {YELLOW}{obj_file.relative_to(cwd)}{RESET}",
             [dev_cc]
             + dev_cc_flags
             + cp_flags
@@ -157,7 +163,7 @@ def compile_for_device(source_files):
                 source_file,
                 "-o",
                 obj_file,
-            ]
+            ],
         )
         obj_files.append(obj_file)
 
@@ -165,26 +171,37 @@ def compile_for_device(source_files):
 
 
 def link_for_device(obj_files):
-    run([dev_cc] + dev_cc_flags + ld_flags + obj_files + ["-o", elf])
+    run(
+        f"Linking {', '.join(f'{YELLOW}{file.name}{WHITE}' for file in obj_files)} {WHITE}=> {YELLOW}{elf.relative_to(cwd)}{RESET}",
+        [dev_cc] + dev_cc_flags + ld_flags + obj_files + ["-o", elf],
+    )
 
 
 def compile_for_simulator(source_files):
     run(
+        f"Compiling {', '.join(f'{YELLOW}{file.name}{WHITE}' for file in source_files)} {WHITE}=> {YELLOW}{dylib.relative_to(cwd)}{RESET}",
         [sim_cc]
         + sim_cc_flags
         + dylib_flags
         + sim_def_flags
         + include_flags
         + source_files
-        + ["-o", dylib]
+        + ["-o", dylib],
+    )
+
+
+def cp_to_bundle(files):
+    run(
+        f"Copying {', '.join(f'{YELLOW}{file.name}{WHITE}' for file in files)} {WHITE}=> {YELLOW}{bundle_dir.relative_to(cwd)}{RESET}",
+        ["cp", "-rf"] + files + [bundle_dir],
     )
 
 
 # transpile main.c for device
-transpile_nelua(dev_cc, dev_main_c)
+transpile_nelua(dev_cc, main_nelua, dev_main_c)
 
 # transpile main.c for simulator
-transpile_nelua(sim_cc, sim_main_c)
+transpile_nelua(sim_cc, main_nelua, sim_main_c)
 
 # compile main.o for device
 obj_files = compile_for_device([dev_main_c, setup_c])
@@ -196,8 +213,11 @@ link_for_device(obj_files)
 compile_for_simulator([sim_main_c, setup_c])
 
 # populate bundle
-run(["cp", "-rf", elf, dylib, bundle_dir])
-run(["cp", "-rf"] + list(assets_dir.iterdir()) + [bundle_dir])
+cp_to_bundle([elf, dylib])
+cp_to_bundle(list(assets_dir.iterdir()))
 
 # build PDX
-run([pdc, bundle_dir, pdx])
+run(
+    f"Bundling {YELLOW}{bundle_dir.relative_to(cwd)}{RESET} {WHITE}=> {YELLOW}{pdx}{RESET}",
+    [pdc, bundle_dir, pdx],
+)

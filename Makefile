@@ -19,11 +19,11 @@ endif
 ######
 
 VPATH += src
-
+#
 # FIXME obviously this is bad and not good
 src/main.c: src/main.nelua
 	~/dev/nelua-lang/nelua --cc gcc --code src/main.nelua --output src/main.c
-#~/dev/nelua-lang/nelua --cc $(GCC)$(TRGT)gcc --code src/main.nelua --output src/main.c
+#	~/dev/nelua-lang/nelua --cc $(GCC)$(TRGT)gcc --code src/main.nelua --output src/main.c
 
 # List C source files here
 SRC = src/main.c
