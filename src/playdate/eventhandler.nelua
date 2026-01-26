@@ -1,5 +1,4 @@
 local PlaydateEventHandler: type = @record {
-  playdate: *PlaydateAPI,
   init: function(self: *PlaydateEventHandler): void,
   init_lua: function(self: *PlaydateEventHandler): void,
   update: function(self: *PlaydateEventHandler): void,
@@ -17,6 +16,8 @@ local PlaydateEventHandler: type = @record {
 
 global PlaydateEvents: PlaydateEventHandler = {}
 
+global Playdate: *PlaydateAPI
+
 -- The Playdate SDK never calls main, but Nelua relies on main to initialize a
 -- lot of global variables. We need to declare main here so that we can call it
 -- ourselves from eventHandler.
@@ -32,7 +33,7 @@ local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uin
   if not main_initialized then
     main()
     main_initialized = true
-    PlaydateEvents.playdate = playdate
+    Playdate = playdate
   end
 
   if event == SystemEvent.Init and PlaydateEvents.init ~= nilptr then
