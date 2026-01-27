@@ -18,12 +18,7 @@ global PlaydateEvents: PlaydateEventHandler = {}
 
 global Playdate: *PlaydateAPI
 
--- The Playdate SDK never calls main, but Nelua relies on main to initialize a
--- lot of global variables. We need to declare main here so that we can call it
--- ourselves from eventHandler.
---global function main(argc: cint, argv: *cstring): cint <cimport, codename "main"> end
-
-global main_initialized: boolean = false
+local initialized: boolean = false
 
 local function update(self: pointer): cint
   PlaydateEvents:update()
@@ -31,10 +26,27 @@ local function update(self: pointer): cint
 end
 
 local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uint32): cint <cexport, codename "eventHandler">
-  if not main_initialized then
-    --main()
-    ## cemit [[ main(0, ""); ]]
-    main_initialized = true
+  if not initialized then
+    -- The Playdate SDK never calls main, but Nelua relies on main to
+    -- initialize a lot of global variables. Main needs to be explicitly declared
+    -- and called here so that it can be called manually from eventHandler.
+    --
+    -- This file needs to be transpiled with the `nogcentry` pragma defined
+    -- because the default GC entrypoint assumes the entire program's lifecycle
+    -- is contained within main, but for Playdate games, the entire program's
+    -- lifecycle is actually _outside_ of main.
+    --
+    -- With the default GC entrypoint, the GC is initialized and then destroyed
+    -- before the rest of the program even runs. By disabling it, the GC needs
+    -- to be explicitly initialized here. It doesn't need to be destroyed
+    -- because the Playdate OS does a complete reboot on exit anyway.
+    local function main(argc: cint, argv: *cstring): cint <cimport, codename "main"> end
+    local argc: cint = 0
+
+    gc:init(&argc)
+    main(argc, nilptr)
+
+    initialized = true
     Playdate = playdate
   end
 

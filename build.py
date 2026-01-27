@@ -18,7 +18,9 @@ def run(message, args):
     print(f"{WHITE}$", *args, RESET)
     process = subprocess.run(args)
     if process.returncode != 0:
-        print(f"{RED}✕{RESET} process failed with exit code {RED}{process.returncode}{RESET}")
+        print(
+            f"{RED}✕{RESET} process failed with exit code {RED}{process.returncode}{RESET}"
+        )
         sys.exit(process.returncode)
 
 
@@ -82,6 +84,9 @@ include_dirs = [
 lib_dirs = []
 
 nelua = require("nelua")
+nelua_pragmas = [
+    "nogcentry",
+]
 
 sim_cc = require("clang")  # FIXME gcc if linux
 sim_cc_flags = [
@@ -157,11 +162,15 @@ sim_def_flags = [f"-D{flag}=1" for flag in sim_defs]
 dev_def_flags = [f"-D{flag}=1" for flag in dev_defs]
 include_flags = [flag for path in include_dirs for flag in ("-I", path)]
 
+nelua_pragma_flags = [flag for pragma in nelua_pragmas for flag in ("--pragma", pragma)]
+
 
 def transpile_nelua(cc, source_file, output):
     run(
         f"Transpiling {YELLOW}{source_file.name} {WHITE}=> {YELLOW}{output.relative_to(cwd)}{RESET}",
-        [nelua, "--cc", cc, "--code", source_file, "--output", output],
+        [nelua]
+        + nelua_pragma_flags
+        + ["--cc", cc, "--code", source_file, "--output", output],
     )
 
 
