@@ -1,8 +1,8 @@
 require("allocators.default")
 require("string")
 
-require("./playdate/init.nelua")
-require("./playdate/eventhandler.nelua")
+require(".playdate.init")
+require(".playdate.eventhandler")
 
 local fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft"
 local font: *LCDFont
