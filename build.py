@@ -3,6 +3,7 @@ from pathlib import Path
 from shutil import which
 import os
 import subprocess
+import sys
 
 WHITE = "\033[37m"
 BLACK = "\033[30m"
@@ -15,7 +16,10 @@ YELLOW = "\033[33m"
 def run(message, args):
     print(message)
     print(f"{WHITE}$", *args, RESET)
-    subprocess.run(args)
+    process = subprocess.run(args)
+    if process.returncode != 0:
+        print(f"{RED}✕{RESET} process failed with exit code {RED}{process.returncode}{RESET}")
+        sys.exit(process.returncode)
 
 
 def require(exe):
