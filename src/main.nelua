@@ -1,3 +1,6 @@
+require("allocators.default")
+require("string")
+
 require("./playdate/init.nelua")
 require("./playdate/eventhandler.nelua")
 
@@ -11,6 +14,9 @@ global y = (LCD_ROWS - TEXT_HEIGHT) / 2
 global dx = 1
 global dy = 2
 
+local Person: type = @record {name: string, age: integer}
+local age = 20
+
 function PlaydateEvents:init()
   Playdate.system.logToConsole("init")
   font = Playdate.graphics.loadFont(fontpath, nilptr)
@@ -20,7 +26,12 @@ function PlaydateEvents:update()
   Playdate.graphics.clear(Color.White)
   Playdate.graphics.setFont(font)
 
-  local text = "Hello, world!"
+  local p = default_allocator:new(@Person)
+  p.name = "John"
+  p.age = age
+  age = age + 1
+
+  local text = p.name .. ": " .. tostring(p.age)
   Playdate.graphics.drawText(text.data, #text, StringEncoding.ASCII, x, y)
 
   x = x + dx
