@@ -15,6 +15,7 @@ global dx = 1
 global dy = 2
 
 local Person: type = @record {name: string, age: integer}
+local name = "John"
 local age = 20
 
 function PlaydateEvents:init()
@@ -27,7 +28,7 @@ function PlaydateEvents:update()
   Playdate.graphics.setFont(font)
 
   local p = default_allocator:new(@Person)
-  p.name = "John"
+  p.name = name
   p.age = age
   age = age + 1
 
@@ -45,4 +46,28 @@ function PlaydateEvents:update()
   end
 
   Playdate.system.drawFPS(0, 0)
+end
+
+function PlaydateEvents:button_a_down()
+  name = "A"
+end
+
+function PlaydateEvents:button_b_down()
+  name = "B"
+end
+
+function PlaydateEvents:button_up_down()
+  dy = dy - 1
+end
+
+function PlaydateEvents:button_down_down()
+  dy = dy + 1
+end
+
+function PlaydateEvents:button_left_down()
+  dx = dx - 1
+end
+
+function PlaydateEvents:button_right_down()
+  dx = dx + 1
 end

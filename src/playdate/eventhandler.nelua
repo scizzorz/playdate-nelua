@@ -1,7 +1,7 @@
 local PlaydateEventHandler: type = @record {
+  -- system events
   init: function(self: *PlaydateEventHandler): void,
   init_lua: function(self: *PlaydateEventHandler): void,
-  update: function(self: *PlaydateEventHandler): void,
   lock: function(self: *PlaydateEventHandler): void,
   unlock: function(self: *PlaydateEventHandler): void,
   pause: function(self: *PlaydateEventHandler): void,
@@ -12,17 +12,85 @@ local PlaydateEventHandler: type = @record {
   key_released: function(self: *PlaydateEventHandler, key: uint32): void,
   mirror_started: function(self: *PlaydateEventHandler): void,
   mirror_ended: function(self: *PlaydateEventHandler): void,
+  -- update callback
+  update: function(self: *PlaydateEventHandler): void,
+  -- button callbacks
+  button_queue_size: integer,
+  button_a_down: function(self: *PlaydateEventHandler): void,
+  button_a_up: function(self: *PlaydateEventHandler): void,
+  button_b_down: function(self: *PlaydateEventHandler): void,
+  button_b_up: function(self: *PlaydateEventHandler): void,
+  button_up_down: function(self: *PlaydateEventHandler): void,
+  button_up_up: function(self: *PlaydateEventHandler): void,
+  button_down_down: function(self: *PlaydateEventHandler): void,
+  button_down_up: function(self: *PlaydateEventHandler): void,
+  button_left_down: function(self: *PlaydateEventHandler): void,
+  button_left_up: function(self: *PlaydateEventHandler): void,
+  button_right_down: function(self: *PlaydateEventHandler): void,
+  button_right_up: function(self: *PlaydateEventHandler): void,
 }
 
 global PlaydateEvents: PlaydateEventHandler = {}
+PlaydateEvents.button_queue_size = 5
 
 global Playdate: *PlaydateAPI
 
 local initialized: boolean = false
 
-local function update(self: pointer): cint
+local function updateCallback(self: pointer): cint
   PlaydateEvents:update()
   return 1
+end
+
+local function buttonCallback(button: Buttons, down: int64, when: uint32, userdata: pointer): cint
+  local call: function(self: *PlaydateEventHandler) = nilptr
+  if button == Buttons.A then
+    if down == 1 then
+      call = PlaydateEvents.button_a_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_a_up
+    end
+
+  elseif button == Buttons.B then
+    if down == 1 then
+      call = PlaydateEvents.button_b_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_b_up
+    end
+
+  elseif button == Buttons.Up then
+    if down == 1 then
+      call = PlaydateEvents.button_up_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_up_up
+    end
+
+  elseif button == Buttons.Down then
+    if down == 1 then
+      call = PlaydateEvents.button_down_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_down_up
+    end
+
+  elseif button == Buttons.Left then
+    if down == 1 then
+      call = PlaydateEvents.button_left_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_left_up
+    end
+
+  elseif button == Buttons.Right then
+    if down == 1 then
+      call = PlaydateEvents.button_right_down
+    elseif down == 0 then
+      call = PlaydateEvents.button_right_up
+    end
+  end
+
+  if call ~= nilptr then
+    call(PlaydateEvents)
+  end
+  return 0
 end
 
 local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uint32): cint <cexport, codename "eventHandler">
@@ -48,11 +116,17 @@ local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uin
 
     initialized = true
     Playdate = playdate
+
+    -- error: cannot assign a constant variable
+    -- booooo
+    -- print = playdate.system.logToConsole
+    -- error = playdate.system.error
   end
 
   if event == SystemEvent.Init and PlaydateEvents.init ~= nilptr then
     if PlaydateEvents.update ~= nilptr then
-      playdate.system.setUpdateCallback(update, nilptr)
+      playdate.system.setUpdateCallback(updateCallback, nilptr)
+      playdate.system.setButtonCallback(buttonCallback, nilptr, PlaydateEvents.button_queue_size)
     end
     PlaydateEvents:init()
   elseif event == SystemEvent.InitLua and PlaydateEvents.init_lua ~= nilptr then
