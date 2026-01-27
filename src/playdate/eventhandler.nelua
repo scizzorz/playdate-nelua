@@ -12,22 +12,39 @@ local PlaydateEventHandler: type = @record {
   key_released: function(self: *PlaydateEventHandler, key: uint32): void,
   mirror_started: function(self: *PlaydateEventHandler): void,
   mirror_ended: function(self: *PlaydateEventHandler): void,
+
   -- update callback
   update: function(self: *PlaydateEventHandler): void,
+
   -- button callbacks
   button_queue_size: integer,
-  button_a_down: function(self: *PlaydateEventHandler): void,
-  button_a_up: function(self: *PlaydateEventHandler): void,
-  button_b_down: function(self: *PlaydateEventHandler): void,
-  button_b_up: function(self: *PlaydateEventHandler): void,
-  button_up_down: function(self: *PlaydateEventHandler): void,
-  button_up_up: function(self: *PlaydateEventHandler): void,
-  button_down_down: function(self: *PlaydateEventHandler): void,
-  button_down_up: function(self: *PlaydateEventHandler): void,
-  button_left_down: function(self: *PlaydateEventHandler): void,
-  button_left_up: function(self: *PlaydateEventHandler): void,
-  button_right_down: function(self: *PlaydateEventHandler): void,
-  button_right_up: function(self: *PlaydateEventHandler): void,
+  button_a_pressed: function(self: *PlaydateEventHandler): void,
+  button_a_released: function(self: *PlaydateEventHandler): void,
+  button_b_pressed: function(self: *PlaydateEventHandler): void,
+  button_b_released: function(self: *PlaydateEventHandler): void,
+  button_up_pressed: function(self: *PlaydateEventHandler): void,
+  button_up_released: function(self: *PlaydateEventHandler): void,
+  button_down_pressed: function(self: *PlaydateEventHandler): void,
+  button_down_released: function(self: *PlaydateEventHandler): void,
+  button_left_pressed: function(self: *PlaydateEventHandler): void,
+  button_left_released: function(self: *PlaydateEventHandler): void,
+  button_right_pressed: function(self: *PlaydateEventHandler): void,
+  button_right_released: function(self: *PlaydateEventHandler): void,
+
+  -- button states
+  button_a_is_pressed: boolean,
+  button_b_is_pressed: boolean,
+  button_up_is_pressed: boolean,
+  button_down_is_pressed: boolean,
+  button_left_is_pressed: boolean,
+  button_right_is_pressed: boolean,
+
+  -- crank callbacks
+  crank_docked: function(self: *PlaydateEventHandler): void,
+  crank_undocked: function(self: *PlaydateEventHandler): void,
+
+  -- crank states
+  crank_is_docked: boolean,
 }
 
 global PlaydateEvents: PlaydateEventHandler = {}
@@ -38,6 +55,15 @@ global Playdate: *PlaydateAPI
 local initialized: boolean = false
 
 local function updateCallback(self: pointer): cint
+  -- crank docking callback
+  local crank_is_docked = (Playdate.system.isCrankDocked() == 1)
+  if crank_is_docked and not PlaydateEvents.crank_is_docked and PlaydateEvents.crank_docked ~= nilptr then
+    PlaydateEvents:crank_docked()
+  elseif not crank_is_docked and PlaydateEvents.crank_is_docked and PlaydateEvents.crank_undocked ~= nilptr then
+    PlaydateEvents:crank_undocked()
+  end
+  PlaydateEvents.crank_is_docked = crank_is_docked
+
   PlaydateEvents:update()
   return 1
 end
@@ -46,44 +72,56 @@ local function buttonCallback(button: Buttons, down: int64, when: uint32, userda
   local call: function(self: *PlaydateEventHandler) = nilptr
   if button == Buttons.A then
     if down == 1 then
-      call = PlaydateEvents.button_a_down
+      call = PlaydateEvents.button_a_pressed
+      PlaydateEvents.button_a_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_a_up
+      call = PlaydateEvents.button_a_released
+      PlaydateEvents.button_a_is_pressed = false
     end
 
   elseif button == Buttons.B then
     if down == 1 then
-      call = PlaydateEvents.button_b_down
+      call = PlaydateEvents.button_b_pressed
+      PlaydateEvents.button_b_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_b_up
+      call = PlaydateEvents.button_b_released
+      PlaydateEvents.button_b_is_pressed = false
     end
 
   elseif button == Buttons.Up then
     if down == 1 then
-      call = PlaydateEvents.button_up_down
+      call = PlaydateEvents.button_up_pressed
+      PlaydateEvents.button_up_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_up_up
+      call = PlaydateEvents.button_up_released
+      PlaydateEvents.button_up_is_pressed = false
     end
 
   elseif button == Buttons.Down then
     if down == 1 then
-      call = PlaydateEvents.button_down_down
+      call = PlaydateEvents.button_down_pressed
+      PlaydateEvents.button_down_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_down_up
+      call = PlaydateEvents.button_down_released
+      PlaydateEvents.button_down_is_pressed = false
     end
 
   elseif button == Buttons.Left then
     if down == 1 then
-      call = PlaydateEvents.button_left_down
+      call = PlaydateEvents.button_left_pressed
+      PlaydateEvents.button_left_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_left_up
+      call = PlaydateEvents.button_left_released
+      PlaydateEvents.button_left_is_pressed = false
     end
 
   elseif button == Buttons.Right then
     if down == 1 then
-      call = PlaydateEvents.button_right_down
+      call = PlaydateEvents.button_right_pressed
+      PlaydateEvents.button_right_is_pressed = true
     elseif down == 0 then
-      call = PlaydateEvents.button_right_up
+      call = PlaydateEvents.button_right_released
+      PlaydateEvents.button_right_is_pressed = false
     end
   end
 

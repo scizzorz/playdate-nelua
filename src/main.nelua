@@ -48,26 +48,36 @@ function PlaydateEvents:update()
   Playdate.system.drawFPS(0, 0)
 end
 
-function PlaydateEvents:button_a_down()
+function PlaydateEvents:button_a_pressed()
   name = "A"
 end
 
-function PlaydateEvents:button_b_down()
+function PlaydateEvents:button_b_pressed()
   name = "B"
 end
 
-function PlaydateEvents:button_up_down()
+function PlaydateEvents:button_up_pressed()
   dy = dy - 1
 end
 
-function PlaydateEvents:button_down_down()
+function PlaydateEvents:button_down_pressed()
   dy = dy + 1
 end
 
-function PlaydateEvents:button_left_down()
+function PlaydateEvents:button_left_pressed()
   dx = dx - 1
 end
 
-function PlaydateEvents:button_right_down()
+function PlaydateEvents:button_right_pressed()
   dx = dx + 1
+end
+
+function PlaydateEvents:crank_docked()
+  dx = 0
+  dy = 0
+end
+
+function PlaydateEvents:crank_undocked()
+  dx = 1
+  dy = 1
 end
