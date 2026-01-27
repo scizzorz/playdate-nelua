@@ -58,7 +58,7 @@ global PDInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {
 global PDMenuItem: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
 --[[ type aliases ]]
-local CallbackFunction: type = @function(userdata: pointer): void
+local CallbackFunction: type = @function(userdata: pointer): cint
 local MenuItemCallbackFunction: type = @function(userdata: pointer): void
 local ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
 

@@ -21,17 +21,19 @@ global Playdate: *PlaydateAPI
 -- The Playdate SDK never calls main, but Nelua relies on main to initialize a
 -- lot of global variables. We need to declare main here so that we can call it
 -- ourselves from eventHandler.
-local function main(argc: cint, argv: *cstring): cint <cimport, codename "main"> end
+--global function main(argc: cint, argv: *cstring): cint <cimport, codename "main"> end
 
 global main_initialized: boolean = false
 
-local function update(self: pointer): void
+local function update(self: pointer): cint
   PlaydateEvents:update()
+  return 1
 end
 
 local function eventHandler(playdate: *PlaydateAPI, event: SystemEvent, arg: uint32): cint <cexport, codename "eventHandler">
   if not main_initialized then
-    main()
+    --main()
+    ## cemit [[ main(0, ""); ]]
     main_initialized = true
     Playdate = playdate
   end
