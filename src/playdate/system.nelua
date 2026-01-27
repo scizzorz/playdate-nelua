@@ -58,9 +58,9 @@ global PDInfo: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {
 global PDMenuItem: type <cimport, ctypedef, cinclude "pd_api.h"> = @record {}
 
 --[[ type aliases ]]
-local CallbackFunction: type = @function(userdata: pointer): cint
-local MenuItemCallbackFunction: type = @function(userdata: pointer): void
-local ButtonCallbackFunction: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
+local UpdateCallback: type = @function(userdata: pointer): cint
+local MenuItemCallback: type = @function(userdata: pointer): void
+local ButtonCallback: type = @function(button: Buttons, down: integer, when: uint32, userdata: pointer): cint
 
 global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.h"> = @record {
   realloc: function(ptr: pointer, size: csize): pointer, -- ptr = NULL -> malloc, size = 0 -> free
@@ -72,7 +72,7 @@ global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.
   getSecondsSinceEpoch: function(milliseconds: *cuint): cuint,
   drawFPS: function(x: cint, y: cint),
 
-  setUpdateCallback: function(update: CallbackFunction, userdata: pointer),
+  setUpdateCallback: function(update: UpdateCallback, userdata: pointer),
   getButtonState: function(current: *Buttons, pushed: *Buttons, released: *Buttons),
   setPeripheralsEnabled: function(mask: Peripherals),
   getAccelerometer: function(outx: *float32, outy: *float32, outz: *float32),
@@ -86,9 +86,9 @@ global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.
   setAutoLockDisabled: function(disable: cint),
 
   setMenuImage: function(bitmap: *LCDBitmap, xOffset: cint),
-  addMenuItem: function(title: cstring, callback: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
-  addCheckmarkMenuItem: function(title: cstring, value: cint, callback: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
-  addOptionsMenuItem: function(title: cstring, optionTitles: *cstring, optionsCount: cint, f: *MenuItemCallbackFunction, userdata: pointer): *PDMenuItem,
+  addMenuItem: function(title: cstring, callback: *MenuItemCallback, userdata: pointer): *PDMenuItem,
+  addCheckmarkMenuItem: function(title: cstring, value: cint, callback: *MenuItemCallback, userdata: pointer): *PDMenuItem,
+  addOptionsMenuItem: function(title: cstring, optionTitles: *cstring, optionsCount: cint, f: *MenuItemCallback, userdata: pointer): *PDMenuItem,
   removeAllMenuItems: function(),
   removeMenuItem: function(menuItem: *PDMenuItem),
   getMenuItemValue: function(menuItem: *PDMenuItem): cint,
@@ -118,7 +118,7 @@ global PlaydateSystem: type <cimport "playdate_sys", ctypedef, cinclude "pd_api.
   clearICache: function(),
 
   -- 2.4
-  setButtonCallback: function(cb: ButtonCallbackFunction, buttonud: pointer, queuesize: cint),
+  setButtonCallback: function(cb: ButtonCallback, buttonud: pointer, queuesize: cint),
   setSerialMessageCallback: function(callback: function(cstring)),
   -- FIXME not sure we have va_args here
   -- vaFormatString: function(outstr: *cstring, fmt: cstring, ???)
