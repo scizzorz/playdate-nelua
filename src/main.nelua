@@ -2,7 +2,8 @@ require("allocators.default")
 require("string")
 
 require(".playdate.init")
-require(".playdate.eventhandler")
+require(".playdate.paper.eventhandler")
+require(".playdate.paper.image")
 
 local fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft"
 local font: *LCDFont
@@ -18,14 +19,18 @@ local Person: type = @record {name: string, age: integer}
 local name = "John"
 local age = 20
 
+local img: Image
+
 function PlaydateEvents:init()
   Playdate.system.logToConsole("init")
   font = Playdate.graphics.loadFont(fontpath, nilptr)
+  img = Image.load("weasel")
 end
 
 function PlaydateEvents:update()
   Playdate.graphics.clear(Color.White)
   Playdate.graphics.setFont(font)
+  img:draw(10, 10)
 
   local p = default_allocator:new(@Person)
   p.name = name
@@ -54,6 +59,7 @@ end
 
 function PlaydateEvents:button_b_pressed()
   name = "B"
+  img:clear(Color.Black)
 end
 
 function PlaydateEvents:button_up_pressed()

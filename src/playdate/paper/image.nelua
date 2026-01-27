@@ -1,0 +1,51 @@
+global Image: type = @record {
+  bitmap: *LCDBitmap,
+}
+
+function Image.new(width: integer, height: integer, background: Color)
+  return Image {
+    bitmap=Playdate.graphics.newBitmap(width, height, background),
+  }
+end
+
+function Image.load(path: string)
+  local err: cstring
+  return Image {
+    bitmap=Playdate.graphics.loadBitmap(path.data, &err),
+  }
+end
+
+function Image:clear(background: Color)
+  Playdate.graphics.clearBitmap(self.bitmap, background)
+end
+
+function Image:copy(): Image
+  return Image {
+    bitmap=Playdate.graphics.copyBitmap(self.bitmap)
+  }
+end
+
+function Image:free()
+  if self.bitmap == nilptr then
+    return
+  end
+
+  Playdate.graphics.freeBitmap(self.bitmap)
+  self.bitmap = nilptr
+end
+
+function Image:draw(x: integer, y: integer)
+  if self.bitmap == nilptr then
+    Playdate.system.error("attempt to draw image after free")
+  end
+
+  Playdate.graphics.drawBitmap(self.bitmap, x, y, Flip.None)
+end
+
+function Image:draw_flipped(x: integer, y: integer, flip: Flip)
+  if self.bitmap == nilptr then
+    Playdate.system.error("attempt to draw image after free")
+  end
+
+  Playdate.graphics.drawBitmap(self.bitmap, x, y, flip)
+end
