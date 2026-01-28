@@ -68,7 +68,7 @@ local function updateCallback(self: pointer): cint
   return 1
 end
 
-local function buttonCallback(button: Buttons, down: int64, when: uint32, userdata: pointer): cint
+local function buttonCallback(button: Buttons, down: cint, when: uint32, userdata: pointer): cint
   local call: function(self: *PlaydateEventHandler) = nilptr
   if button == Buttons.A then
     if down == 1 then
