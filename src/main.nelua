@@ -4,6 +4,7 @@ require("string")
 require(".playdate.init")
 require(".playdate.paper.eventhandler")
 require(".playdate.paper.image")
+require(".playdate.paper.imagetable")
 
 local fontpath = "/System/Fonts/Asheville-Sans-14-Bold.pft"
 local font: *LCDFont
@@ -15,16 +16,22 @@ global y = (LCD_ROWS - TEXT_HEIGHT) / 2
 global dx = 1
 global dy = 2
 
+local dpad_x, dpad_y = LCD_COLUMNS / 2 - 16, 200
+local b_x, b_y = LCD_COLUMNS / 2 + 2, 200
+local a_x, a_y = LCD_COLUMNS / 2 + 18, 200
+
 local Person: type = @record {name: string, age: integer}
 local name = "John"
 local age = 20
 
+local button_images: ImageTable
 local img: Image
 
 function PlaydateEvents:init()
   Playdate.system.logToConsole("init")
   font = Playdate.graphics.loadFont(fontpath, nilptr)
   img = Image.load("weasel")
+  button_images = ImageTable.load("buttons")
 end
 
 function PlaydateEvents:update()
@@ -50,6 +57,34 @@ function PlaydateEvents:update()
     dy = -dy
   end
 
+  button_images:get(0):draw(dpad_x, dpad_y)
+  if self.button_up_is_pressed then
+    button_images:get(1):draw(dpad_x, dpad_y)
+  end
+  if self.button_down_is_pressed then
+    button_images:get(2):draw(dpad_x, dpad_y)
+  end
+  if self.button_left_is_pressed then
+    button_images:get(3):draw(dpad_x, dpad_y)
+  end
+  if self.button_right_is_pressed then
+    button_images:get(4):draw(dpad_x, dpad_y)
+  end
+
+  Playdate.graphics.setDrawMode(DrawMode.Inverted)
+  if self.button_a_is_pressed then
+    Playdate.graphics.setDrawMode(DrawMode.Copy)
+  end
+  button_images:get(5):draw(a_x, a_y)
+
+  Playdate.graphics.setDrawMode(DrawMode.Inverted)
+  if self.button_b_is_pressed then
+    Playdate.graphics.setDrawMode(DrawMode.Copy)
+  end
+  button_images:get(6):draw(b_x, b_y)
+
+  Playdate.graphics.setDrawMode(DrawMode.Copy)
+
   Playdate.system.drawFPS(0, 0)
 end
 
@@ -59,7 +94,6 @@ end
 
 function PlaydateEvents:button_b_pressed()
   name = "B"
-  img:clear(Color.Black)
 end
 
 function PlaydateEvents:button_up_pressed()

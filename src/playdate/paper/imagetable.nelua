@@ -1,0 +1,37 @@
+require(".image")
+
+global ImageTable: type = @record {
+  table: *LCDBitmapTable,
+}
+
+function ImageTable.new(count: integer, width: integer, height: integer): ImageTable
+  return ImageTable {
+    table=Playdate.graphics.newBitmapTable(count, width, height),
+  }
+end
+
+function ImageTable.load(path: string): ImageTable
+  local err: cstring
+  return ImageTable {
+    table=Playdate.graphics.loadBitmapTable(path.data, &err),
+  }
+end
+
+function ImageTable:free()
+  if self.table == nilptr then
+    return
+  end
+
+  Playdate.graphics.freeBitmapTable(self.table)
+  self.table = nilptr
+end
+
+function ImageTable:get(index: integer): Image
+  if self.table == nilptr then
+    Playdate.system.error("attempt to index nil image table")
+  end
+
+  return Image {
+    bitmap=Playdate.graphics.getTableBitmap(self.table, index),
+  }
+end

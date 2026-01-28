@@ -2,13 +2,13 @@ global Image: type = @record {
   bitmap: *LCDBitmap,
 }
 
-function Image.new(width: integer, height: integer, background: Color)
+function Image.new(width: integer, height: integer, background: Color): Image
   return Image {
     bitmap=Playdate.graphics.newBitmap(width, height, background),
   }
 end
 
-function Image.load(path: string)
+function Image.load(path: string): Image
   local err: cstring
   return Image {
     bitmap=Playdate.graphics.loadBitmap(path.data, &err),
